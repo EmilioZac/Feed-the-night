@@ -1,0 +1,4 @@
+ZONA \ ESTADO JUGADOR;CAMUFLAJE (Caminar);SIGILO (Agachado);ACCIÓN (Correr / Saltar)
+ZONA VERDE (Pública);INVISIBLE / IGNORAR: El guardia asume que eres un civil. Solo detecta si hay contacto físico.;SOSPECHA: “¿Qué hace ese tipo agachado?”. El guardia abandona su ruta e investiga la posición.;ALERTA: Correr hace ruido. Los guardias giran a mirar. Si ven armas o sangre: Ataque.
+ZONA NARANJA (Callejones, );ADVERTENCIA: “Eh, fuera de aquí”. Te siguen un momento. Te Siguen a una distancia de 4 metros.;DETECCIÓN LENTA: Eres difícil de ver, pero si te ven saben que eres un intruso. Te arrestan o atacan.;ATAQUE: Asumen hostilidad inmediata. Disparan o persiguen.
+ZONA ROJA (Zona de asesinato);ATAQUE: No funciona, te atacan enseguida.;SIGILO PURO: La única opción viable. Si el cono de visión te toca, eres detectado al instante.;ATAQUE LETAL: Respuesta armada coordinada.

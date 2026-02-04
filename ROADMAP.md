@@ -13,17 +13,34 @@
 **Duración Estimada:** 3 Semanas
 
 ### 1.1 Subfase: Game Design & Documentación
-*Definir las matemáticas detrás del miedo.*
+*Definir las matemáticas detrás del miedo y reglas de zonas.*
 
-*   **Sistema de Hambre (Matemáticas)**
-    *   [ ] Definir en hoja de cálculo: `Valor_Maximo_Hambre`, `Tasa_Decaimiento_Pasiva` (por segundo), `Costo_Habilidad_Correr`, `Costo_Habilidad_Camuflaje`.
-    *   [ ] Definir `Umbral_Frenesi` (ej: al llegar al 0% o 5% de hambre).
-    *   [ ] Diseñar la "Tabla de Alimentación": Cuánta hambre recupera un Civil vs un Policía vs un NPC Crítico.
-*   **Sistema de Sigilo (Reglas)**
-    *   [ ] Definir distancias de visión en metros para estados de alerta (Blanco, Amarillo, Rojo).
-    *   [ ] Definir tiempos de reacción (cuántos segundos tarda un guardia en pasar de "Te veo" a "Disparo").
+*   **Sistema de Hambre (Reglas Numéricas Finales)**
+    *   [ ] **Decaimiento**:
+        *   Pasivo: -1% cada 20 segundos.
+        *   Correr: -1% cada 10 segundos (2x velocidad).
+        *   Habilidad de Combate: -1% (Costo instantáneo).
+        *   Regeneración de Vida: +1 HP/seg a cambio de -0.2% Hambre/seg.
+    *   [ ] **Alimentación (Ganancia Base)**:
+        *   Civil: +20%
+        *   Investigador Rango Bajo: +30%
+        *   Investigador Rango Alto: +40%
+        *   *Diminishing Returns*: Cada vez que comes, la ganancia futura se reduce en un 0.1% acumulativo.
+    *   [ ] **Tipos de NPC**:
+        *   Civiles (Pasivos)
+        *   Policías (Atacan según Matrix)
+        *   Investigadores Bajo Rango (Atacan según Matrix)
+        *   Investigadores Alto Rango (Atacan según Matrix)
+
+*   **Matriz de Sigilo y Zonas (Fuente: `StealthMatrix.csv`)**
+    *   [ ] **Integrar Reglas del CSV**:
+        *   🟢 **Zona Verde (Pública)**: Camuflaje = Invisible. Agacharse = Sospecha (Investigan posición).
+        *   🟠 **Zona Naranja (Callejones)**: Camuflaje = Advertencia (Te siguen a 4m). Agacharse = Detección Lenta.
+        *   🔴 **Zona Roja (Asesinato)**: Camuflaje = Ataque inmediato. Sigilo Puro = Única opción.
+    *   [ ] **Validación**: Usar el archivo `StealthMatrix.csv` en la raíz del proyecto como tabla de verdad para la IA.
+
 *   **Diseño de Nivel (Papel)**
-    *   [ ] Dibujar plano top-down del "Distrito Residencial" identificando: Rutas principales (calle), Rutas de sigilo (callejones/tejados), Puntos de alimentación seguros.
+    *   [ ] Dibujar plano top-down aplicando códigos de color (Verde/Naranja/Rojo) a las calles y callejones.
 
 ### 1.2 Subfase: Ingeniería Core
 *Setup del proyecto y herramientas base.*
@@ -82,6 +99,44 @@
 *   **Game Cycle**
     *   [ ] Condición de Victoria: Llenar la barra de hambre al 100% y llegar a la "Zona Segura".
     *   [ ] Condición de Derrota: Barra de Hambre llega a 0 (Muerte por inanición) o Salud llega a 0 (Disparado por policía).
+
+---
+
+---
+
+## Fase 2.5: Sistema de Combate (Expansión)
+**Objetivo:** Implementar la respuesta ofensiva del jugador y la IA cuando el sigilo falla.
+**Duración Estimada:** 3-4 Semanas
+
+### 2.5.1 Estadísticas y Balanceo
+*Definir las reglas de daño y resistencia.*
+
+*   **Stats Base**
+    *   [ ] **Vida Estándar**: 100 HP (Jugador, Civiles, Policías, Investigador Bajo).
+    *   [ ] **Vida Boss**: 150 HP (Investigador Alto Rango).
+*   **Jugador (Ghoul)**
+    *   [ ] **Ataque Básico (Puños)**: 0.5 Daño.
+    *   [ ] **Kagune (Arma Biológica)**: 2 Daño.
+        *   *Desbloqueo*: Tras comer 10 NPCs.
+        *   *Tipo*: Aleatorio al desbloquear.
+    *   [ ] **Ataque Aéreo**: 3 Daño (Requiere estar en aire).
+    *   [ ] **Bloqueo**:
+        *   Resistencia: 3 Golpes.
+        *   Fatiga: Si dura > 8 segundos, se debilita (se rompe con 2 golpes).
+    *   [ ] **Dash**: Esquiva rápida.
+*   **IA Enemiga**
+    *   [ ] **Policía**:
+        *   Porra: 2 Daño.
+        *   Pistola: 6 Daño.
+        *   *Comportamiento*: Huye con < 30% Vida.
+    *   [ ] **Investigador Rango Bajo**:
+        *   Espada (Quinque): 5 Daño.
+        *   Distancia: 7 Daño.
+        *   *Comportamiento*: Huye con < 15% Vida.
+    *   [ ] **Investigador Rango Alto (Élite)**:
+        *   Espada (Quinque): 7 Daño.
+        *   Distancia: 10 Daño.
+        *   *Comportamiento*: No huye (Lucha a muerte).
 
 ---
 
