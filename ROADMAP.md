@@ -172,6 +172,15 @@
     *   [ ] **Avatar Masks en Unity**:
         *   Configurar máscaras para "Upper Body" y "Lower Body".
         *   *Objetivo*: Permitir que el Ghoul ejecute la animación de ataque (Kagune) con el torso mientras las piernas siguen corriendo o caminando.
+    *   [ ] **Animaciones por Implementar (Checklist)**:
+        *   [ ] Idle (Base)
+        *   [ ] Walk (Frente, Lados, Atrás)
+        *   [ ] Run
+        *   [ ] Crouch Idle & Walk
+        *   [ ] Attack (Combo 3 golpes)
+        *   [ ] Block (Loop)
+        *   [ ] Dash (Roll o Slide)
+        *   [ ] Feed (Comer)
 *   **Optimización de Assets**
     *   [ ] **LODs (Level of Detail)**:
         *   LOD0 (Close): 10k tris.
