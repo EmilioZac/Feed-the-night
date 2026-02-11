@@ -16,28 +16,28 @@
 *Definir las matemáticas detrás del miedo y reglas de zonas.*
 
 *   **Sistema de Hambre (Reglas Numéricas Finales)**
-    *   [ ] **Decaimiento**:
+    *   [x] **Decaimiento**:
         *   Pasivo: -1% cada 20 segundos.
         *   Correr: -1% cada 10 segundos (2x velocidad).
         *   Habilidad de Combate: -1% (Costo instantáneo).
         *   Regeneración de Vida: +1 HP/seg a cambio de -0.2% Hambre/seg.
-    *   [ ] **Alimentación (Ganancia Base)**:
+    *   [x] **Alimentación (Ganancia Base)**:
         *   Civil: +20%
         *   Investigador Rango Bajo: +30%
         *   Investigador Rango Alto: +40%
         *   *Diminishing Returns*: Cada vez que comes, la ganancia futura se reduce en un 0.1% acumulativo.
-    *   [ ] **Tipos de NPC**:
+    *   [x] **Tipos de NPC**:
         *   Civiles (Pasivos)
         *   Policías (Atacan según Matrix)
         *   Investigadores Bajo Rango (Atacan según Matrix)
         *   Investigadores Alto Rango (Atacan según Matrix)
 
 *   **Matriz de Sigilo y Zonas (Fuente: `StealthMatrix.csv`)**
-    *   [ ] **Integrar Reglas del CSV**:
+    *   [x] **Integrar Reglas del CSV**:
         *   🟢 **Zona Verde (Pública)**: Camuflaje = Invisible. Agacharse = Sospecha (Investigan posición).
         *   🟠 **Zona Naranja (Callejones)**: Camuflaje = Advertencia (Te siguen a 4m). Agacharse = Detección Lenta.
         *   🔴 **Zona Roja (Asesinato)**: Camuflaje = Ataque inmediato. Sigilo Puro = Única opción.
-    *   [ ] **Validación**: Usar el archivo `StealthMatrix.csv` en la raíz del proyecto como tabla de verdad para la IA.
+    *   [x] **Validación**: Usar el archivo `StealthMatrix.csv` en la raíz del proyecto como tabla de verdad para la IA.
 
 *   **Diseño de Nivel (Papel)**
     *   [ ] Dibujar plano top-down aplicando códigos de color (Verde/Naranja/Rojo) a las calles y callejones.
@@ -46,9 +46,9 @@
 *Setup del proyecto y herramientas base.*
 
 *   **Arquitectura del Proyecto**
-    *   [ ] Configurar Unity 2022 LTS o superior con URP (Universal Render Pipeline) para iluminación performante.
-    *   [ ] Estructurar carpetas: `_Project`, `_Project/Art`, `_Project/Code/Systems`, `_Project/Code/Controllers`.
-    *   [ ] Instalar Paquetes: `Input System` (nuevo), `Cinemachine` (cámara), `ProBuilder` (greyboxing rápido).
+    *   [x] Configurar Unity 2022 LTS o superior con URP (Universal Render Pipeline) para iluminación performante.
+    *   [x] Estructurar carpetas: `Assets/_Project`, `Assets/_Project/Art`, `Assets/_Project/Code/Systems`, `Assets/_Project/Code/Controllers`.
+    *   [x] Instalar Paquetes: `Input System` (nuevo), `Cinemachine` (cámara), `ProBuilder` (greyboxing rápido).
 *   **Controller del Jugador (Prototipo)**
     *   [ ] Crear Script `PlayerController.cs`.
     *   [ ] Implementar Máquina de Estados Finitos (FSM): `Idle`, `Walk`, `Run` (con ruido), `Crouch` (sigilo), `Feed` (bloqueo de movimiento).
