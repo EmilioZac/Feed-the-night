@@ -61,6 +61,13 @@
     *   [ ] **Shader de Lluvia**: Crear shader graph que simule ondas de agua en el suelo y efecto de "mojado" en superficies (Smoothness up, Normal map noise).
     *   [ ] **Iluminación Volumétrica**: Configurar niebla global y luces de área para simular la contaminación lumínica de neones.
     *   [ ] **Post-Processing Inicial**: Crear perfil con Color Grading (tonos fríos/azules), Bloom (neones) y Vignette (claustrofobia).
+    *   [ ] **Guía de Estilo Técnica (Performance & Look)**:
+        *   **Trim Sheets**: Diseñar atlas de texturas de 2048x2048 para elementos arquitectónicos repetitivos (cornisas, marcos de ventanas, bordillos) para reducir draw calls.
+        *   **Weighted Normals**: Aplicar en modelos hard-surface para suavizar bordes sin aumentar el polycount (baking innecesario).
+    *   [ ] **Sistema de Materiales (Master Shader)**:
+        *   **Shader Graph "Uber"**: Crear shader maestro con switches para:
+            *   *Wetness/Rain*: Parámetro float (0-1) que ajusta Smoothness y oscurece el Albedo en tiempo real.
+            *   *Neon Pulse*: Parámetro de emisivo controlable por script para carteles que parpadean o reaccionan al audio.
 
 ---
 
@@ -89,6 +96,11 @@
 *   **Comportamientos (Behavior Tree o FSM)**
     *   [ ] **Civil**: `Wander` (puntos aleatorios) -> `DetectPlayer` -> `Flee` (correr opuesto al jugador).
     *   [ ] **Policía**: `Patrol` (lista de waypoints) -> `Investigate` (ir a la posición del último ruido) -> `Attack` (Shooting/Arrest).
+*   **Coherencia Visual (Color Scripting)**
+    *   [ ] **Siluetas y Legibilidad**:
+        *   *Civiles*: Siluetas redondeadas, colores desaturados (grises, marrones), postura encorvada (miedo).
+        *   *Investigadores*: Siluetas angulares (hombreras, gabardinas rígidas), acentos de color rojo/blanco puro, postura erguida (autoridad).
+    *   [ ] **Jerarquía de Amenaza**: Usar emisivos en los enemigos (ojos o equipo) que cambien de Amarillo (Búsqueda) a Rojo (Combate).
 
 ### 2.3 Subfase: Integración del Loop
 *Cerrar el círculo jugable.*
@@ -153,6 +165,19 @@
 *   **Level Dressing**
     *   [ ] Vestir el nivel Greybox: Añadir detalles, cables colgando, charcos específicos, basura dinámica.
     *   [ ] Iluminación Final: "Bake" de luces estáticas + Luces dinámicas para patrullas (linternas).
+*   **Pipeline de Personajes (Tech Art)**
+    *   [ ] **Modelado para Animación**:
+        *   Modelar en A-Pose (mejor deformación de hombros que T-Pose).
+        *   Separar malla de cabeza y manos si se planea desmembramiento o personalización futura.
+    *   [ ] **Avatar Masks en Unity**:
+        *   Configurar máscaras para "Upper Body" y "Lower Body".
+        *   *Objetivo*: Permitir que el Ghoul ejecute la animación de ataque (Kagune) con el torso mientras las piernas siguen corriendo o caminando.
+*   **Optimización de Assets**
+    *   [ ] **LODs (Level of Detail)**:
+        *   LOD0 (Close): 10k tris.
+        *   LOD1 (10m): 5k tris.
+        *   LOD2 (Far): Billboard o Low Poly (<500 tris).
+    *   [ ] **Colisionadores**: Usar primitivas (Box/Capsule) para el 90% del entorno. Mesh Colliders solo para geometría compleja navegable.
 
 ### 3.2 Subfase: Sistemas Avanzados (Polishing)
 *Profundidad y sensaciones.*
