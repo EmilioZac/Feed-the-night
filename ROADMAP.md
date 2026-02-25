@@ -55,19 +55,7 @@
     *   [x] Implementar movimiento físico básico (CharacterController o Rigidbody) ajustando la sensación de peso.
 
 ### 1.3 Subfase: Tech Art & Estética
-*Validar el "Look & Feel" Neo-noir.*
-
-*   **Atmósfera Visual**
-    *   [ ] **Shader de Lluvia**: Crear shader graph que simule ondas de agua en el suelo y efecto de "mojado" en superficies (Smoothness up, Normal map noise).
-    *   [ ] **Iluminación Volumétrica**: Configurar niebla global y luces de área para simular la contaminación lumínica de neones.
-    *   [ ] **Post-Processing Inicial**: Crear perfil con Color Grading (tonos fríos/azules), Bloom (neones) y Vignette (claustrofobia).
-    *   [ ] **Guía de Estilo Técnica (Performance & Look)**:
-        *   **Trim Sheets**: Diseñar atlas de texturas de 2048x2048 para elementos arquitectónicos repetitivos (cornisas, marcos de ventanas, bordillos) para reducir draw calls.
-        *   **Weighted Normals**: Aplicar en modelos hard-surface para suavizar bordes sin aumentar el polycount (baking innecesario).
-    *   [ ] **Sistema de Materiales (Master Shader)**:
-        *   **Shader Graph "Uber"**: Crear shader maestro con switches para:
-            *   *Wetness/Rain*: Parámetro float (0-1) que ajusta Smoothness y oscurece el Albedo en tiempo real.
-            *   *Neon Pulse*: Parámetro de emisivo controlable por script para carteles que parpadean o reaccionan al audio.
+*→ Movida a **Fase 2.4** para no bloquear el prototipo jugable.*
 
 ---
 
@@ -79,8 +67,10 @@
 *Implementar las mecánicas del jugador.*
 
 *   **Gestión de Hambre**
-    *   [ ] Script `HungerSystem`: Decremento por `Time.deltaTime`.
-    *   [ ] Conexión UI: Barra simple (Slider) que cambia de color al bajar del 20%.
+    *   [x] Script `HungerSystem`: Decremento por `Time.deltaTime`.
+    *   [x] Script `HealthSystem`: Regeneración pasiva consumiendo hambre.
+    *   [x] Script `EnergySystem`: Consumo por carrera/salto y regeneración.
+    *   [x] Conexión UI: Barras de Vida, Hambre y Energía con porcentajes.
     *   [ ] Estado `Frenzy`: Si hambre == 0, forzar movimiento hacia el NPC más cercano (override de controles).
 *   **Mecánica de Alimentación**
     *   [ ] Trigger de detección: `CanFeed?` (bool) cuando está detrás de un NPC y en rango.
@@ -111,6 +101,21 @@
 *   **Game Cycle**
     *   [ ] Condición de Victoria: Llenar la barra de hambre al 100% y llegar a la "Zona Segura".
     *   [ ] Condición de Derrota: Barra de Hambre llega a 0 (Muerte por inanición) o Salud llega a 0 (Disparado por policía).
+
+### 2.4 Subfase: Tech Art & Estética (Neo-noir)
+*Validar el "Look & Feel" Neo-noir. Movida desde Fase 1.3.*
+
+*   **Atmósfera Visual**
+    *   [x] **Shader de Lluvia**: Shader URP (`RainSurface.shader`) con ripples animados, wet-look y VFX de partículas (`RainVFX.cs`).
+    *   [ ] **Iluminación Volumétrica**: Configurar niebla global y luces de área para simular la contaminación lumínica de neones.
+    *   [ ] **Post-Processing Inicial**: Crear perfil con Color Grading (tonos fríos/azules), Bloom (neones) y Vignette (claustrofobia).
+    *   [ ] **Guía de Estilo Técnica (Performance & Look)**:
+        *   **Trim Sheets**: Diseñar atlas de texturas de 2048x2048 para elementos arquitectónicos repetitivos (cornisas, marcos de ventanas, bordillos) para reducir draw calls.
+        *   **Weighted Normals**: Aplicar en modelos hard-surface para suavizar bordes sin aumentar el polycount (baking innecesario).
+    *   [ ] **Sistema de Materiales (Master Shader)**:
+        *   **Shader Graph "Uber"**: Crear shader maestro con switches para:
+            *   *Wetness/Rain*: Parámetro float (0-1) que ajusta Smoothness y oscurece el Albedo en tiempo real.
+            *   *Neon Pulse*: Parámetro de emisivo controlable por script para carteles que parpadean o reaccionan al audio.
 
 ---
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using FeedTheNight.Systems;
 
 namespace FeedTheNight.Controllers
 {
@@ -14,6 +15,9 @@ namespace FeedTheNight.Controllers
         public float crouchSpeed = 2f;
         public float gravity = -9.81f;
         public float jumpHeight = 1.0f;
+
+        [Header("Systems Interaction")]
+        public EnergySystem energySystem;
 
         [Header("State")]
         public State currentState;
@@ -42,11 +46,17 @@ namespace FeedTheNight.Controllers
         private bool _isGrounded;
         private bool _isCamouflaged;
         private float _blockDuration;
+        private float _damageFlashTimer;
+        private HealthSystem _health;
 
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
             _playerInput = GetComponent<PlayerInput>();
+            _health = GetComponent<HealthSystem>();
+
+            // Auto-asignar sistemas si están en el mismo objeto
+            if (energySystem == null) energySystem = GetComponent<EnergySystem>();
         }
 
         private void Start()
@@ -68,6 +78,8 @@ namespace FeedTheNight.Controllers
             _crouchAction = _playerInput.actions["Crouch"];
             _interactAction = _playerInput.actions["Interact"];
             _jumpAction = _playerInput.actions["Jump"];
+
+            if (_health != null) _health.OnDamaged += (amt) => _damageFlashTimer = 0.2f;
         }
 
         private void Update()
@@ -142,64 +154,73 @@ namespace FeedTheNight.Controllers
             // 3. Determine State & Speed
             float finalSpeed = walkSpeed;
             
-            // Visual Feedback Reset
-            if (_renderer != null) _renderer.material.color = _originalColor;
-
-            if (isFeeding)
+            // Visual Feedback Logic
+            if (_renderer != null)
             {
-                currentState = State.Feed;
-                move = Vector3.zero;
-            }
-            else if (isBlocking)
-            {
-                _blockDuration += Time.deltaTime;
-                move = Vector3.zero; // Stop moving while blocking? Request said "relantize la mitad"
-                // Correction based on previous prompt: blocking slows to 50%
-                move = transform.right * input.x + transform.forward * input.y; // Ensure move is calculated
-                finalSpeed = walkSpeed * 0.5f;
-
-                if (_blockDuration > 4.0f)
+                if (_damageFlashTimer > 0)
                 {
-                    currentState = State.Fatigue;
-                    if (_renderer != null) _renderer.material.color = new Color(1f, 0.5f, 0f); // Orange
+                    _damageFlashTimer -= Time.deltaTime;
+                    _renderer.material.color = Color.red; // Flash Rojo por daño
                 }
                 else
                 {
-                    currentState = State.Block;
-                    if (_renderer != null) _renderer.material.color = Color.yellow;
-                }
-            }
-            else
-            {
-                _blockDuration = 0f; // Reset if not blocking
-
-                if (isAttacking)
-                {
-                     currentState = State.Attack;
-                     if (_renderer != null) _renderer.material.color = Color.green;
-                }
-                else if (isCrouching)
-                {
-                    currentState = State.Crouch;
-                    finalSpeed = walkSpeed * 0.4f;
-                    if (_renderer != null) _renderer.material.color = Color.blue;
-                }
-                else if (input.magnitude > 0.1f)
-                {
-                    if (isSprinting)
+                    _renderer.material.color = _originalColor;
+                    
+                    if (isFeeding)
                     {
-                        currentState = State.Run;
-                        finalSpeed = runSpeed;
+                        currentState = State.Feed;
+                        move = Vector3.zero;
+                    }
+                    else if (isBlocking)
+                    {
+                        _blockDuration += Time.deltaTime;
+                        move = transform.right * input.x + transform.forward * input.y;
+                        finalSpeed = walkSpeed * 0.5f;
+
+                        if (_blockDuration > 4.0f)
+                        {
+                            currentState = State.Fatigue;
+                            _renderer.material.color = new Color(1f, 0.5f, 0f);
+                        }
+                        else
+                        {
+                            currentState = State.Block;
+                            _renderer.material.color = Color.yellow;
+                        }
+                    }
+                    else if (isAttacking)
+                    {
+                        currentState = State.Attack;
+                        _renderer.material.color = Color.green;
+
+                        // Coste de energía al atacar (0.25% del max)
+                        if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.0025f);
+                    }
+                    else if (isCrouching)
+                    {
+                        currentState = State.Crouch;
+                        finalSpeed = walkSpeed * 0.4f;
+                        _renderer.material.color = Color.blue;
+                    }
+                    else if (input.magnitude > 0.1f)
+                    {
+                        bool canRun = energySystem == null || energySystem.CanRun;
+                        
+                        if (isSprinting && canRun)
+                        {
+                            currentState = State.Run;
+                            finalSpeed = runSpeed;
+                        }
+                        else
+                        {
+                            currentState = State.Walk;
+                        }
                     }
                     else
                     {
-                        currentState = State.Walk;
+                        currentState = State.Idle;
+                        finalSpeed = 0f;
                     }
-                }
-                else
-                {
-                    currentState = State.Idle;
-                    finalSpeed = 0f;
                 }
             }
 
@@ -212,7 +233,18 @@ namespace FeedTheNight.Controllers
             // Optional: Jump
             if (_jumpAction.WasPressedThisFrame() && _isGrounded && currentState != State.Feed && currentState != State.Camouflage)
             {
-                _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                bool canJump = energySystem == null || energySystem.Energy >= 10f; // Minimal cost check
+                if (canJump)
+                {
+                    _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                    if (energySystem != null) energySystem.OnJump();
+                }
+            }
+
+            // Update Energy System with running state
+            if (energySystem != null)
+            {
+                energySystem.SetRunning(currentState == State.Run);
             }
         }
 
@@ -228,6 +260,10 @@ namespace FeedTheNight.Controllers
         private System.Collections.IEnumerator PerformDash(Vector3 direction)
         {
             canDash = false;
+
+            // Coste de dash: 1% de la energía máxima
+            if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.01f);
+
             isDashing = true;
             
             float startTime = Time.time;
