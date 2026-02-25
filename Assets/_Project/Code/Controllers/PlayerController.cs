@@ -16,6 +16,11 @@ namespace FeedTheNight.Controllers
         public float gravity = -9.81f;
         public float jumpHeight = 1.0f;
 
+        [Header("Combat Settings")]
+        public float attackDamage = 0.5f;
+        public float attackRange = 1.5f;
+        public LayerMask hitLayers; // Define what the player can hit
+
         [Header("Systems Interaction")]
         public EnergySystem energySystem;
 
@@ -87,8 +92,17 @@ namespace FeedTheNight.Controllers
 
         private void Update()
         {
+            // --- DEATH STATE (ROADMAP Phase 2.1) ---
+            if (_health != null && !_health.IsAlive)
+            {
+                if (_renderer != null) _renderer.material.color = Color.black;
+                _velocity = Vector3.zero; // Stop gravity/sliding
+                return; // Stop all logic
+            }
+
             HandleGravity();
             HandleStateAndMovement();
+            CheckCanFeed(); // Reseteamos al final para que HandleStateAndMovement vea el valor del OnTriggerStay previo
         }
 
         private void HandleGravity()
@@ -142,6 +156,18 @@ namespace FeedTheNight.Controllers
             bool isAttacking = false;
             if (_playerInput.actions.FindAction("Attack") != null)
                 isAttacking = _playerInput.actions["Attack"].WasPressedThisFrame();
+
+            // Attack Logic
+            if (isAttacking)
+            {
+                PerformAttack();
+            }
+
+            // Feed Logic (Consumption)
+            if (isFeeding && canFeed)
+            {
+                ConsumeNPC();
+            }
             
             bool isBlocking = Keyboard.current != null && Keyboard.current.fKey.isPressed;
             bool isDashingInput = Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
@@ -204,7 +230,11 @@ namespace FeedTheNight.Controllers
                         _renderer.material.color = Color.green;
 
                         // Coste de energía al atacar (0.5% del max)
-                        if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.005f);
+                        if (energySystem != null)
+                        {
+                            energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.005f);
+                            energySystem.ResetRegenDelay(0.4f); // Cooldown de 0.4s para volver a regen
+                        }
                     }
                     else if (isCrouching)
                     {
@@ -347,6 +377,85 @@ namespace FeedTheNight.Controllers
                 }
             }
             return nearest;
+        }
+
+        [Header("Feeding Settings")]
+        public float feedRange = 2.0f;
+        public bool canFeed;
+
+        private void PerformAttack()
+        {
+            // Detect hit via SphereOverlap
+            Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, attackRange, hitLayers);
+            foreach (var hit in hits)
+            {
+                // IGNORAR AL JUGADOR (Evita hacerse daño a sí mismo)
+                if (hit.transform.root == transform.root) continue;
+
+                // Priorizar el nuevo script NPCCivil
+                var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+                if (npcCivil != null)
+                {
+                    npcCivil.TakeDamage(attackDamage);
+                    continue; // Si golpeamos al NPC civil, saltamos al siguiente hit
+                }
+
+                // Compatibilidad con HealthSystem genérico (por si acaso)
+                HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
+                if (targetHealth != null)
+                {
+                    targetHealth.TakeDamage(attackDamage);
+                    Debug.Log($"[COMBAT] Golpeaste a {hit.name} causando {attackDamage} daño.");
+                }
+            }
+        }
+
+        private GameObject _closestDeadNPC;
+
+        private void OnTriggerStay(Collider other)
+        {
+            if (other.CompareTag("npc"))
+            {
+                CheckCanFeedTrigger(other.gameObject);
+            }
+        }
+
+        private void CheckCanFeedTrigger(GameObject npc)
+        {
+            // Simplificado: Solo verificamos si está MUERTO y en rango
+            var npcScript = npc.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+            if (npcScript != null && npcScript.IsDead)
+            {
+                float distance = Vector3.Distance(transform.position, npc.transform.position);
+                if (distance <= feedRange)
+                {
+                    canFeed = true;
+                    _closestDeadNPC = npc;
+                    Debug.Log("<color=cyan>[FEEDING]</color> I can feed");
+                }
+            }
+        }
+
+        private void CheckCanFeed()
+        {
+            // Limpiamos el estado cada frame para que OnTriggerStay lo vuelva a encender si aplica
+            canFeed = false;
+        }
+
+        private void ConsumeNPC()
+        {
+            if (_closestDeadNPC != null)
+            {
+                Debug.Log("<color=green>[FEEDING]</color> Consumiendo civil...");
+                
+                // Aplicar ganancia de hambre (Civil = 20%)
+                if (_hunger != null) _hunger.Feed(HungerSystem.NPCType.Civil);
+                
+                // Desaparecer NPC
+                Destroy(_closestDeadNPC);
+                _closestDeadNPC = null;
+                canFeed = false;
+            }
         }
     }
 }

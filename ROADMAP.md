@@ -71,7 +71,7 @@
     *   [x] Script `HealthSystem`: Regeneración pasiva consumiendo hambre.
     *   [x] Script `EnergySystem`: Consumo por carrera/salto y regeneración.
     *   [x] Conexión UI: Barras de Vida, Hambre y Energía con porcentajes.
-    *   [ ] Estado `Frenzy`: Si hambre == 0, forzar movimiento hacia el NPC más cercano (override de controles).
+    *   [x] Estado `Frenzy`: Si hambre < 20%, forzar movimiento hacia el NPC más cercano y ataques automáticos.
 *   **Mecánica de Alimentación**
     *   [ ] Trigger de detección: `CanFeed?` (bool) cuando está detrás de un NPC y en rango.
     *   [ ] Acción de Comer: Mantener botón 'E' durante 3 segundos.

@@ -86,6 +86,14 @@ namespace FeedTheNight.Systems
             ModifyEnergy(-jumpDrainFlat);
         }
 
+        /// <summary>
+        /// Reinicia el temporizador de delay para la regeneración.
+        /// </summary>
+        public void ResetRegenDelay(float delay = -1f)
+        {
+            _regenDelayTimer = (delay < 0) ? regenDelay : delay;
+        }
+
         // ── Internals ─────────────────────────────────────────────────────────
         private void HandleDrainAndRegen()
         {

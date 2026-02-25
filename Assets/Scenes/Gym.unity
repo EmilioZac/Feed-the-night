@@ -1103,7 +1103,9 @@ MonoBehaviour:
   currentState: 0
   dashDistance: 5
   dashDuration: 0.2
-  dashCooldown: 5
+  dashCooldown: 4
+  feedRange: 2
+  canFeed: 0
 --- !u!114 &680493265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1275,7 +1277,7 @@ MonoBehaviour:
   _energy: 0
   runDrainRate: 8
   jumpDrainFlat: 10
-  regenRate: 5
+  regenRate: 2
   regenDelay: 1.5
   hungerSystem: {fileID: 680493272}
 --- !u!114 &680493272
