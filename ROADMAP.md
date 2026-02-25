@@ -50,9 +50,9 @@
     *   [x] Estructurar carpetas: `Assets/_Project`, `Assets/_Project/Art`, `Assets/_Project/Code/Systems`, `Assets/_Project/Code/Controllers`.
     *   [x] Instalar Paquetes: `Input System` (nuevo), `Cinemachine` (cámara), `ProBuilder` (greyboxing rápido).
 *   **Controller del Jugador (Prototipo)**
-    *   [ ] Crear Script `PlayerController.cs`.
-    *   [ ] Implementar Máquina de Estados Finitos (FSM): `Idle`, `Walk`, `Run` (con ruido), `Crouch` (sigilo), `Feed` (bloqueo de movimiento).
-    *   [ ] Implementar movimiento físico básico (CharacterController o Rigidbody) ajustando la sensación de peso.
+    *   [x] Crear Script `PlayerController.cs`.
+    *   [x] Implementar Máquina de Estados Finitos (FSM): `Idle`, `Walk`, `Run` (con ruido), `Crouch` (sigilo), `Feed` (bloqueo de movimiento).
+    *   [x] Implementar movimiento físico básico (CharacterController o Rigidbody) ajustando la sensación de peso.
 
 ### 1.3 Subfase: Tech Art & Estética
 *Validar el "Look & Feel" Neo-noir.*
