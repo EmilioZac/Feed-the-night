@@ -48,12 +48,15 @@ namespace FeedTheNight.Controllers
         private float _blockDuration;
         private float _damageFlashTimer;
         private HealthSystem _health;
+        private HungerSystem _hunger;
+        private float _frenzyAttackTimer;
 
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
             _playerInput = GetComponent<PlayerInput>();
             _health = GetComponent<HealthSystem>();
+            _hunger = GetComponent<HungerSystem>();
 
             // Auto-asignar sistemas si están en el mismo objeto
             if (energySystem == null) energySystem = GetComponent<EnergySystem>();
@@ -128,6 +131,13 @@ namespace FeedTheNight.Controllers
                 return; // Exit early to prevent other actions
             }
 
+            // --- FRENZY STATE (ROADMAP Phase 2.1) ---
+            if (_hunger != null && _hunger.IsFrenzy)
+            {
+                HandleFrenzyState();
+                return;
+            }
+
             // Combat Inputs
             bool isAttacking = false;
             if (_playerInput.actions.FindAction("Attack") != null)
@@ -193,8 +203,8 @@ namespace FeedTheNight.Controllers
                         currentState = State.Attack;
                         _renderer.material.color = Color.green;
 
-                        // Coste de energía al atacar (0.25% del max)
-                        if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.0025f);
+                        // Coste de energía al atacar (0.5% del max)
+                        if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.005f);
                     }
                     else if (isCrouching)
                     {
@@ -281,6 +291,62 @@ namespace FeedTheNight.Controllers
             isDashing = false;
             yield return new WaitForSeconds(dashCooldown);
             canDash = true;
+        }
+
+        private void HandleFrenzyState()
+        {
+            currentState = State.Idle; // Or a specific Frenzy state if you add it
+            
+            // 1. Find nearest NPC
+            GameObject nearestNPC = FindNearestNPC();
+            Vector3 move = Vector3.zero;
+
+            if (nearestNPC != null)
+            {
+                Vector3 direction = (nearestNPC.transform.position - transform.position);
+                direction.y = 0; // Keep movement on ground
+                
+                if (direction.magnitude > 1.5f) // Stop when close enough to attack/feed
+                {
+                    move = direction.normalized;
+                }
+            }
+
+            // 2. Move towards NPC (forced speed)
+            float frenzySpeed = runSpeed * 0.8f; 
+            _controller.Move(move * frenzySpeed * Time.deltaTime);
+            _controller.Move(_velocity * Time.deltaTime); // Gravity
+
+            // 3. Auto-attack every 0.5s
+            _frenzyAttackTimer += Time.deltaTime;
+            if (_frenzyAttackTimer >= 0.5f)
+            {
+                _frenzyAttackTimer = 0f;
+                // Attack Visuals
+                if (_renderer != null) _renderer.material.color = Color.green;
+                // Attack Cost
+                if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.0025f);
+                Debug.Log("[Frenzy] Auto-attacking!");
+            }
+        }
+
+        private GameObject FindNearestNPC()
+        {
+            GameObject[] npcs = GameObject.FindGameObjectsWithTag("npc");
+            GameObject nearest = null;
+            float minDist = Mathf.Infinity;
+            Vector3 currentPos = transform.position;
+
+            foreach (GameObject npc in npcs)
+            {
+                float dist = Vector3.Distance(npc.transform.position, currentPos);
+                if (dist < minDist)
+                {
+                    nearest = npc;
+                    minDist = dist;
+                }
+            }
+            return nearest;
         }
     }
 }

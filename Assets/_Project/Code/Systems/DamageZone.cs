@@ -12,8 +12,8 @@ namespace FeedTheNight.Systems
     public class DamageZone : MonoBehaviour
     {
         [Header("Damage Settings")]
-        [Tooltip("Porcentaje de la vida máxima a quitar (0.05 = 5%).")]
-        public float damagePercent = 0.05f;
+        [Tooltip("Porcentaje de la vida máxima a quitar (0.10 = 10%).")]
+        public float damagePercent = 0.10f;
         [Tooltip("Intervalo entre cada pulso de daño en segundos.")]
         public float interval = 2.0f;
 

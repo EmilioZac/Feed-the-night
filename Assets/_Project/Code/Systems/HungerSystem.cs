@@ -73,7 +73,7 @@ namespace FeedTheNight.Systems
 
         // ── Properties ────────────────────────────────────────────────────────
         public float Hunger       => _hunger;
-        public bool  IsFrenzy     => _isFrenzy;
+        public bool  IsFrenzy     => _hunger < lowHungerThreshold; // Frenzy < 20%
         public bool  IsLowHunger  => _hunger <= lowHungerThreshold;
 
         // ── Lifecycle ─────────────────────────────────────────────────────────
@@ -149,15 +149,17 @@ namespace FeedTheNight.Systems
         private void ApplyDecay(float dt)
         {
             float decay = passiveDecayRate;
+            float currentRegenCost = healthRegenCost;
 
-            if (_isRunning)          decay += runningExtraDecay;
-            if (_healthRegenActive)  decay += healthRegenCost;
-
-            // Multiplicador si la energía es baja (< 60%)
+            if (_isRunning) decay += runningExtraDecay;
+            
+            // Si la energía es baja (< 60%), la regeneración cuesta el DOBLE de hambre
             if (energySystem != null && energySystem.Energy < (energySystem.MaxEnergy * 0.6f))
             {
-                decay *= lowEnergyPenalty;
+                currentRegenCost *= 2.0f;
             }
+
+            if (_healthRegenActive) decay += currentRegenCost;
 
             ModifyHunger(-decay * dt);
         }
@@ -171,15 +173,21 @@ namespace FeedTheNight.Systems
 
             OnHungerChanged?.Invoke(_hunger);
 
-            // Frenzy
-            if (_hunger <= 0f && !_isFrenzy)
+            // Frenzy State Change Detection
+            bool currentlyFrenzy = _hunger < lowHungerThreshold;
+            if (currentlyFrenzy && !_isFrenzy)
             {
                 _isFrenzy = true;
                 OnFrenzyEntered?.Invoke();
             }
+            else if (!currentlyFrenzy && _isFrenzy)
+            {
+                _isFrenzy = false;
+                OnFrenzyExited?.Invoke();
+            }
 
             // LowHunger warning
-            if (!_isFrenzy && _hunger <= lowHungerThreshold && prev > lowHungerThreshold)
+            if (_hunger <= lowHungerThreshold && prev > lowHungerThreshold)
             {
                 OnLowHunger?.Invoke();
             }
