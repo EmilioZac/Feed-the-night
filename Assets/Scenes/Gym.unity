@@ -324,8 +324,9 @@ GameObject:
   - component: {fileID: 185567106}
   - component: {fileID: 185567105}
   - component: {fileID: 185567104}
-  m_Layer: 0
-  m_Name: Cube
+  - component: {fileID: 185567109}
+  m_Layer: 7
+  m_Name: Npc
   m_TagString: npc
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -438,6 +439,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &185567109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 185567103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef9827049c99414b9c8e4e9b3947b08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.NPCCivil
+  maxHealth: 40
+  _currentHealth: 0
+  targetRenderer: {fileID: 185567106}
+  deathColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &288848042
 GameObject:
   m_ObjectHideFlags: 0
@@ -576,7 +593,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Main Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -1075,7 +1092,8 @@ GameObject:
   - component: {fileID: 680493272}
   - component: {fileID: 680493273}
   - component: {fileID: 680493271}
-  m_Layer: 0
+  - component: {fileID: 680493274}
+  m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1099,6 +1117,11 @@ MonoBehaviour:
   crouchSpeed: 2
   gravity: -9.81
   jumpHeight: 1
+  attackDamage: 5
+  attackRange: 1.5
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 128
   energySystem: {fileID: 680493271}
   currentState: 0
   dashDistance: 5
@@ -1227,7 +1250,7 @@ Transform:
   m_GameObject: {fileID: 680493263}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.1, z: 0}
+  m_LocalPosition: {x: 8.29, y: 1.1, z: -7.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1322,6 +1345,27 @@ MonoBehaviour:
   regenRate: 1
   regenHungerMin: 5
   hungerSystem: {fileID: 680493272}
+--- !u!65 &680493274
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680493263}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.04713, y: 2, z: 2.4961476}
+  m_Center: {x: -0.055103064, y: 0, z: 0.7480738}
 --- !u!1 &821226516
 GameObject:
   m_ObjectHideFlags: 0
@@ -1464,7 +1508,7 @@ GameObject:
   - component: {fileID: 951777167}
   - component: {fileID: 951777166}
   m_Layer: 0
-  m_Name: PlayerHUD
+  m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
