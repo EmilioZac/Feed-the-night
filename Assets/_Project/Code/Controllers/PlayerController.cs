@@ -117,11 +117,32 @@ namespace FeedTheNight.Controllers
             _velocity.y += gravity * Time.deltaTime;
         }
 
+        [Header("Camera Reference")]
+        public Transform playerCamera;
+
         private void HandleStateAndMovement()
         {
+            // Auto-asignar cámara principal si no está asignada
+            if (playerCamera == null && Camera.main != null) playerCamera = Camera.main.transform;
+
             // 1. Read Input
             Vector2 input = _moveAction.ReadValue<Vector2>();
-            Vector3 move = transform.right * input.x + transform.forward * input.y;
+            
+            // Calculate movement relative to camera
+            Vector3 camForward = Vector3.forward;
+            Vector3 camRight = Vector3.right;
+
+            if (playerCamera != null)
+            {
+                camForward = playerCamera.forward;
+                camRight = playerCamera.right;
+                camForward.y = 0; // Keep movement horizontal
+                camRight.y = 0;
+                camForward.Normalize();
+                camRight.Normalize();
+            }
+
+            Vector3 move = camRight * input.x + camForward * input.y;
             bool isSprinting = _sprintAction.IsPressed();
             bool isCrouching = false; // Reset per frame for priority logic
             bool isFeeding = _interactAction.IsPressed();
