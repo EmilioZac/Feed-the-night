@@ -56,6 +56,19 @@ namespace FeedTheNight.NPCs
                 targetRenderer.material.color = deathColor;
             }
 
+            // Congelar física: todos los Rigidbodies (root + hijos)
+            foreach (var rb in GetComponentsInChildren<Rigidbody>())
+            {
+                rb.linearVelocity   = Vector3.zero;
+                rb.angularVelocity  = Vector3.zero;
+                rb.isKinematic      = true;
+                rb.constraints      = RigidbodyConstraints.FreezeAll;
+            }
+
+            // Desactivar CharacterController si existe
+            var cc = GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+
             // Desactivar lógica de movimiento u otros scripts
             MonoBehaviour[] scripts = GetComponents<MonoBehaviour>();
             foreach (var script in scripts)
@@ -67,6 +80,36 @@ namespace FeedTheNight.NPCs
             }
 
             Debug.Log($"<color=red>[NPC] {gameObject.name} HA MUERTO.</color> Puedes alimentarte con 'E'.");
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            // Color según estado: cyan = vivo (zona feeding), rojo = muerto (listo para comer)
+            Color zoneColor = _isDead ? new Color(1f, 0f, 0f, 0.2f) : new Color(0f, 1f, 1f, 0.15f);
+            Color wireColor = _isDead ? Color.red : Color.cyan;
+
+            // Dibuja el BoxCollider trigger como zona de feeding
+            var col = GetComponent<BoxCollider>();
+            if (col != null)
+            {
+                Matrix4x4 oldMatrix = Gizmos.matrix;
+                Gizmos.matrix = Matrix4x4.TRS(
+                    transform.TransformPoint(col.center),
+                    transform.rotation,
+                    transform.lossyScale
+                );
+                Gizmos.color = zoneColor;
+                Gizmos.DrawCube(Vector3.zero, col.size);
+                Gizmos.color = wireColor;
+                Gizmos.DrawWireCube(Vector3.zero, col.size);
+                Gizmos.matrix = oldMatrix;
+            }
+            else
+            {
+                // Fallback: esfera si no hay BoxCollider
+                Gizmos.color = wireColor;
+                Gizmos.DrawWireSphere(transform.position, 1.5f);
+            }
         }
     }
 }

@@ -419,24 +419,31 @@ namespace FeedTheNight.Controllers
         {
             if (other.CompareTag("npc"))
             {
-                CheckCanFeedTrigger(other.gameObject);
+                CheckCanFeedTrigger(other);
             }
         }
 
-        private void CheckCanFeedTrigger(GameObject npc)
+        private void CheckCanFeedTrigger(Collider npcCollider)
         {
-            // Simplificado: Solo verificamos si está MUERTO y en rango
-            var npcScript = npc.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
-            if (npcScript != null && npcScript.IsDead)
+            var npcScript = npcCollider.gameObject.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+
+            if (npcScript == null)
             {
-                float distance = Vector3.Distance(transform.position, npc.transform.position);
-                if (distance <= feedRange)
-                {
-                    canFeed = true;
-                    _closestDeadNPC = npc;
-                    Debug.Log("<color=cyan>[FEEDING]</color> I can feed");
-                }
+                Debug.Log("<color=red>[FEEDING]</color> CanFeed? NO — El NPC no tiene NPCCivil.");
+                return;
             }
+
+            if (!npcScript.IsDead)
+            {
+                Debug.Log($"<color=orange>[FEEDING]</color> CanFeed? NO — El NPC '{npcCollider.gameObject.name}' está vivo.");
+                return;
+            }
+
+            // OnTriggerStay ya garantiza que estamos dentro del collider trigger del NPC
+            // No usamos ClosestPoint porque no funciona bien en triggers
+            canFeed = true;
+            _closestDeadNPC = npcScript.gameObject;
+            Debug.Log($"<color=cyan>[FEEDING]</color> CanFeed? SÍ — NPC: '{_closestDeadNPC.name}'");
         }
 
         private void CheckCanFeed()
@@ -447,18 +454,39 @@ namespace FeedTheNight.Controllers
 
         private void ConsumeNPC()
         {
-            if (_closestDeadNPC != null)
+            if (_closestDeadNPC == null)
             {
-                Debug.Log("<color=green>[FEEDING]</color> Consumiendo civil...");
-                
-                // Aplicar ganancia de hambre (Civil = 20%)
-                if (_hunger != null) _hunger.Feed(HungerSystem.NPCType.Civil);
-                
-                // Desaparecer NPC
-                Destroy(_closestDeadNPC);
-                _closestDeadNPC = null;
-                canFeed = false;
+                Debug.Log("<color=red>[FEEDING]</color> ConsumeNPC llamado pero _closestDeadNPC es NULL.");
+                return;
             }
+
+            Debug.Log($"<color=green>[FEEDING]</color> Consumiendo civil '{_closestDeadNPC.name}'...");
+
+            // Aplicar ganancia de hambre (Civil = 20%)
+            if (_hunger != null) _hunger.Feed(HungerSystem.NPCType.Civil);
+
+            // _closestDeadNPC ya es el root con NPCCivil — destruir directo
+            Debug.Log($"<color=green>[FEEDING]</color> Destruyendo: '{_closestDeadNPC.name}'");
+            Destroy(_closestDeadNPC);
+
+            _closestDeadNPC = null;
+            canFeed = false;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            // --- Rango de ATAQUE (esfera verde, desplazada al frente) ---
+            Gizmos.color = new Color(0f, 1f, 0f, 0.25f);
+            Vector3 attackOrigin = transform.position + transform.forward * 1f;
+            Gizmos.DrawSphere(attackOrigin, attackRange);
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(attackOrigin, attackRange);
+
+            // --- Rango de FEEDING (esfera cyan, centrada en el jugador) ---
+            Gizmos.color = new Color(0f, 1f, 1f, 0.15f);
+            Gizmos.DrawSphere(transform.position, feedRange);
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, feedRange);
         }
     }
 }
