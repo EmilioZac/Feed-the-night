@@ -97,6 +97,7 @@ namespace FeedTheNight.Controllers
             {
                 if (_renderer != null) _renderer.material.color = Color.black;
                 _velocity = Vector3.zero; // Stop gravity/sliding
+                Time.timeScale = 0f;      // Pausar el juego
                 return; // Stop all logic
             }
 
@@ -356,6 +357,8 @@ namespace FeedTheNight.Controllers
                 if (_renderer != null) _renderer.material.color = Color.green;
                 // Attack Cost
                 if (energySystem != null) energySystem.ModifyEnergy(-energySystem.maxEnergy * 0.0025f);
+                // Perform the actual attack
+                PerformAttack();
                 Debug.Log("[Frenzy] Auto-attacking!");
             }
         }
