@@ -12,6 +12,12 @@ namespace StarterAssets
 		public Vector2 look;
 		public bool jump;
 		public bool sprint;
+		public bool crouch;
+		public bool attack;
+		public bool block;
+		public bool dash;
+		public bool camouflage;
+		public bool interact;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -43,6 +49,36 @@ namespace StarterAssets
 		{
 			SprintInput(value.isPressed);
 		}
+
+		public void OnCrouch(InputValue value)
+		{
+			CrouchInput(value.isPressed);
+		}
+
+		public void OnAttack(InputValue value)
+		{
+			AttackInput(value.isPressed);
+		}
+
+		public void OnBlock(InputValue value)
+		{
+			BlockInput(value.isPressed);
+		}
+
+		public void OnDash(InputValue value)
+		{
+			DashInput(value.isPressed);
+		}
+
+		public void OnCamouflage(InputValue value)
+		{
+			CamouflageInput(value.isPressed);
+		}
+
+		public void OnInteract(InputValue value)
+		{
+			InteractInput(value.isPressed);
+		}
 #endif
 
 
@@ -64,6 +100,36 @@ namespace StarterAssets
 		public void SprintInput(bool newSprintState)
 		{
 			sprint = newSprintState;
+		}
+
+		public void CrouchInput(bool newCrouchState)
+		{
+			crouch = newCrouchState;
+		}
+
+		public void AttackInput(bool newAttackState)
+		{
+			attack = newAttackState;
+		}
+
+		public void BlockInput(bool newBlockState)
+		{
+			block = newBlockState;
+		}
+
+		public void DashInput(bool newDashState)
+		{
+			dash = newDashState;
+		}
+
+		public void CamouflageInput(bool newCamouflageState)
+		{
+			camouflage = newCamouflageState;
+		}
+
+		public void InteractInput(bool newInteractState)
+		{
+			interact = newInteractState;
 		}
 
 		private void OnApplicationFocus(bool hasFocus)

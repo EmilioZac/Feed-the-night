@@ -1,7 +1,9 @@
-﻿ using UnityEngine;
+ using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
+using FeedTheNight.Systems;
+using System.Collections;
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
  */
@@ -12,6 +14,8 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM 
     [RequireComponent(typeof(PlayerInput))]
 #endif
+    [RequireComponent(typeof(HealthSystem))]
+    [RequireComponent(typeof(HungerSystem))]
     public class ThirdPersonController : MonoBehaviour
     {
         [Header("Player")]
@@ -75,6 +79,20 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [Header("Combat Settings")]
+        public float AttackDamage = 0.5f;
+        public float AttackRange = 1.5f;
+        public LayerMask HitLayers;
+        public float DashDistance = 5f;
+        public float DashDuration = 0.2f;
+        public float DashCooldown = 5f;
+        public float FeedRange = 2.0f;
+
+        [Header("Systems Integration")]
+        public EnergySystem EnergySystem;
+        private HealthSystem _health;
+        private HungerSystem _hunger;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -110,6 +128,24 @@ namespace StarterAssets
 
         private bool _hasAnimator;
 
+        // Visuals & State
+        private Renderer _renderer;
+        private Color _originalColor;
+        private float _damageFlashTimer;
+        private float _blockDuration;
+        private bool _canDash = true;
+        private bool _isDashing = false;
+        private bool _canFeed;
+        private GameObject _closestDeadNPC;
+        private float _frenzyAttackTimer;
+        private bool _isCamouflaged;
+
+        // animation IDs
+        private int _animIDCrouch;
+        private int _animIDAttack;
+        private int _animIDBlocked;
+        private int _animIDFeeding;
+
         private bool IsCurrentDeviceMouse
         {
             get
@@ -139,6 +175,16 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            _health = GetComponent<HealthSystem>();
+            _hunger = GetComponent<HungerSystem>();
+
+            if (EnergySystem == null) EnergySystem = GetComponent<EnergySystem>();
+
+            _renderer = GetComponentInChildren<Renderer>();
+            if (_renderer != null) _originalColor = _renderer.material.color;
+
+            if (_health != null) _health.OnDamaged += (amt) => _damageFlashTimer = 0.2f;
+
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
 #else
@@ -156,9 +202,34 @@ namespace StarterAssets
         {
             _hasAnimator = TryGetComponent(out _animator);
 
+            // --- DEATH STATE ---
+            if (_health != null && !_health.IsAlive)
+            {
+                if (_renderer != null) _renderer.material.color = Color.black;
+                _verticalVelocity = 0f;
+                Time.timeScale = 0f;
+                return;
+            }
+
+            // --- FRENZY STATE ---
+            if (_hunger != null && _hunger.IsFrenzy)
+            {
+                HandleFrenzyState();
+                _input.jump = false; // Disable jump in frenzy
+                return;
+            }
+
+            // --- CAMOUFLAGE TOGGLE ---
+            if (_input.camouflage)
+            {
+                _isCamouflaged = !_isCamouflaged;
+                _input.camouflage = false; // Reset toggle
+            }
+
             JumpAndGravity();
             GroundedCheck();
             Move();
+            HandleAdditionalActions();
         }
 
         private void LateUpdate()
@@ -173,6 +244,10 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+            _animIDCrouch = Animator.StringToHash("Crouch");
+            _animIDAttack = Animator.StringToHash("Attack");
+            _animIDBlocked = Animator.StringToHash("Blocked");
+            _animIDFeeding = Animator.StringToHash("Feeding");
         }
 
         private void GroundedCheck()
@@ -248,6 +323,46 @@ namespace StarterAssets
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
+            // Speed Modifiers & Logic
+            float finalSpeed = _speed;
+            
+            if (_isCamouflaged)
+            {
+                finalSpeed *= 0.4f;
+                if (_renderer != null) _renderer.material.color = Color.white;
+            }
+            else if (_damageFlashTimer > 0)
+            {
+                _damageFlashTimer -= Time.deltaTime;
+                if (_renderer != null) _renderer.material.color = Color.red;
+            }
+            else
+            {
+                if (_renderer != null) _renderer.material.color = _originalColor;
+
+                if (_input.block)
+                {
+                    _blockDuration += Time.deltaTime;
+                    finalSpeed *= 0.5f;
+                    if (_renderer != null) _renderer.material.color = _blockDuration > 4.0f ? new Color(1f, 0.5f, 0f) : Color.yellow;
+                }
+                else
+                {
+                    _blockDuration = 0f;
+                }
+
+                if (_input.crouch)
+                {
+                    finalSpeed *= 0.4f;
+                    if (_renderer != null) _renderer.material.color = Color.blue;
+                }
+            }
+
+            // check if running for energy system
+            bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_isCamouflaged;
+            if (EnergySystem != null) EnergySystem.SetRunning(isActuallyRunning);
+            if (!isActuallyRunning && _input.sprint) finalSpeed = MoveSpeed; // Force walk speed if cannot run
+
             // normalise input direction
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
@@ -268,14 +383,23 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            if (!_input.interact || !_canFeed) // Prevent movement while feeding if we want to lock it
+            {
+                _controller.Move(targetDirection.normalized * (finalSpeed * Time.deltaTime) +
+                                 new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            }
+            else
+            {
+                _controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+            }
 
             // update animator if using character
             if (_hasAnimator)
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+                _animator.SetBool(_animIDCrouch, _input.crouch);
+                _animator.SetBool(_animIDBlocked, _input.block);
             }
         }
 
@@ -302,13 +426,23 @@ namespace StarterAssets
                 // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
-                    // the square root of H * -2 * G = how much velocity needed to reach desired height
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-
-                    // update animator if using character
-                    if (_hasAnimator)
+                    bool energyOk = EnergySystem == null || EnergySystem.Energy >= 10f;
+                    if (energyOk && !_isCamouflaged)
                     {
-                        _animator.SetBool(_animIDJump, true);
+                        // the square root of H * -2 * G = how much velocity needed to reach desired height
+                        _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+
+                        // update animator if using character
+                        if (_hasAnimator)
+                        {
+                            _animator.SetBool(_animIDJump, true);
+                        }
+
+                        if (EnergySystem != null) EnergySystem.OnJump();
+                    }
+                    else
+                    {
+                        _input.jump = false;
                     }
                 }
 
@@ -386,6 +520,151 @@ namespace StarterAssets
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+            }
+        }
+
+        private void HandleAdditionalActions()
+        {
+            if (_input.attack)
+            {
+                PerformAttack();
+                _input.attack = false;
+            }
+
+            if (_input.dash && _canDash && !_isDashing)
+            {
+                Vector3 moveDir = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+                StartCoroutine(PerformDash(moveDir));
+                _input.dash = false;
+            }
+
+            if (_input.interact)
+            {
+                if (_canFeed)
+                {
+                    ConsumeNPC();
+                }
+                _input.interact = false;
+            }
+
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDFeeding, _input.interact && _canFeed);
+            }
+
+            // Reset canFeed per frame (it will be set in OnTriggerStay)
+            _canFeed = false;
+        }
+
+        private void PerformAttack()
+        {
+            if (_hasAnimator) _animator.SetTrigger(_animIDAttack);
+            if (_renderer != null) _renderer.material.color = Color.green;
+
+            if (EnergySystem != null)
+            {
+                EnergySystem.ModifyEnergy(-EnergySystem.maxEnergy * 0.005f);
+                EnergySystem.ResetRegenDelay(0.4f);
+            }
+
+            Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
+            foreach (var hit in hits)
+            {
+                if (hit.transform.root == transform.root) continue;
+
+                var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+                if (npcCivil != null)
+                {
+                    npcCivil.TakeDamage(AttackDamage);
+                    continue;
+                }
+
+                HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
+                if (targetHealth != null)
+                {
+                    targetHealth.TakeDamage(AttackDamage);
+                }
+            }
+        }
+
+        private IEnumerator PerformDash(Vector3 direction)
+        {
+            _canDash = false;
+            _isDashing = true;
+
+            if (EnergySystem != null) EnergySystem.ModifyEnergy(-EnergySystem.maxEnergy * 0.01f);
+
+            float startTime = Time.time;
+            if (direction.magnitude < 0.1f) direction = transform.forward;
+
+            while (Time.time < startTime + DashDuration)
+            {
+                _controller.Move(direction * (DashDistance / DashDuration) * Time.deltaTime);
+                yield return null;
+            }
+
+            _isDashing = false;
+            yield return new WaitForSeconds(DashCooldown);
+            _canDash = true;
+        }
+
+        private void HandleFrenzyState()
+        {
+            GameObject nearestNPC = FindNearestNPC();
+            Vector3 move = Vector3.zero;
+
+            if (nearestNPC != null)
+            {
+                Vector3 direction = (nearestNPC.transform.position - transform.position);
+                direction.y = 0;
+                if (direction.magnitude > 1.5f) move = direction.normalized;
+            }
+
+            float frenzySpeed = SprintSpeed * 0.8f;
+            _controller.Move(move * frenzySpeed * Time.deltaTime + new Vector3(0f, _verticalVelocity, 0f) * Time.deltaTime);
+
+            _frenzyAttackTimer += Time.deltaTime;
+            if (_frenzyAttackTimer >= 0.5f)
+            {
+                _frenzyAttackTimer = 0f;
+                PerformAttack();
+            }
+        }
+
+        private GameObject FindNearestNPC()
+        {
+            GameObject[] npcs = GameObject.FindGameObjectsWithTag("npc");
+            GameObject nearest = null;
+            float minDist = Mathf.Infinity;
+            foreach (GameObject npc in npcs)
+            {
+                float dist = Vector3.Distance(npc.transform.position, transform.position);
+                if (dist < minDist) { nearest = npc; minDist = dist; }
+            }
+            return nearest;
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            if (other.CompareTag("npc"))
+            {
+                var npcScript = other.gameObject.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+                if (npcScript != null && npcScript.IsDead)
+                {
+                    _canFeed = true;
+                    _closestDeadNPC = npcScript.gameObject;
+                }
+            }
+        }
+
+        private void ConsumeNPC()
+        {
+            if (_closestDeadNPC != null)
+            {
+                if (_hunger != null) _hunger.Feed(HungerSystem.NPCType.Civil);
+                Destroy(_closestDeadNPC);
+                _closestDeadNPC = null;
+                _canFeed = false;
             }
         }
     }
