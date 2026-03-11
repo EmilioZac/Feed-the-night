@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Cinemachine;
 using System.Collections;
 using FeedTheNight.Systems;
 

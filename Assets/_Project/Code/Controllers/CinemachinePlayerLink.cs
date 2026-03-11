@@ -1,5 +1,5 @@
 using UnityEngine;
-using Cinemachine;
+using Unity.Cinemachine;
 
 namespace FeedTheNight.Controllers
 {
@@ -14,7 +14,7 @@ namespace FeedTheNight.Controllers
         public Transform playerBody;
         
         [Tooltip("La cámara virtual de Cinemachine.")]
-        public CinemachineVirtualCamera virtualCamera;
+        public CinemachineCamera virtualCamera;
 
         [Header("Configuración")]
         [Tooltip("Si es true, el jugador siempre mirará en la dirección horizontal de la cámara.")]

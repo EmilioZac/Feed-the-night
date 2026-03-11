@@ -26,9 +26,12 @@ namespace FeedTheNight.Controllers
         [Tooltip("¡IMPORTANTE! Si es muy rápido, baja este valor en el INSPECTOR a 0.01 o menos.")]
         public float mouseSensitivity = 0.05f; 
 
-        [Header("Límites verticales")]
-        [Range(-90f, 0f)]  public float minPitch = -80f;
-        [Range(0f,  90f)]  public float maxPitch =  80f;
+        [Header("Límites verticales (Restricción de subida/bajada)")]
+        [Tooltip("Ángulo mínimo hacia abajo (negativo).")]
+        [Range(-90f, 0f)]  public float minPitch = -45f;
+
+        [Tooltip("Ángulo máximo hacia arriba (positivo).")]
+        [Range(0f,  90f)]  public float maxPitch =  45f;
 
         private float _xRotation = 0f;
 
