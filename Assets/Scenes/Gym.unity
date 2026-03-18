@@ -1099,31 +1099,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
   m_PrefabInstance: {fileID: 1133167030}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &619766480
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 619766472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82394003ae2590541b0ec0271b808982, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.Systems.HungerSystem
-  startHunger: 100
-  passiveDecayRate: 0.1
-  runningExtraDecay: 0.1
-  healthRegenCost: 0.4
-  energySystem: {fileID: 0}
-  energyThreshold: 60
-  lowEnergyPenalty: 2
-  gainCivil: 20
-  gainLowRank: 30
-  gainHighRank: 40
-  diminishingStep: 0.1
-  lowHungerThreshold: 20
-  _hunger: 0
 --- !u!114 &619766481
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1139,27 +1114,12 @@ MonoBehaviour:
   maxEnergy: 100
   _energy: 0
   runDrainRate: 4
-  jumpDrainFlat: 5
-  regenRate: 2.5
+  jumpDrainFlat: 1
+  dashDrainFlat: 1
+  attackDrainFlat: 1
+  regenRate: 3
   regenDelay: 1.5
-  hungerSystem: {fileID: 619766480}
---- !u!114 &619766482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 619766472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7305416952e63942a0eb9c5d8711dd3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.Systems.HealthSystem
-  maxHealth: 100
-  _health: 0
-  regenRate: 1
-  regenHungerMin: 5
-  hungerSystem: {fileID: 619766480}
+  hungerSystem: {fileID: 619766483}
 --- !u!114 &619766483 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8008698535815026964, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
@@ -1409,6 +1369,8 @@ MonoBehaviour:
   _energy: 0
   runDrainRate: 8
   jumpDrainFlat: 10
+  dashDrainFlat: 15
+  attackDrainFlat: 5
   regenRate: 2
   regenDelay: 1.5
   hungerSystem: {fileID: 680493272}
@@ -1813,6 +1775,14 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: AttackRange
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: AttackDamage
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: DashDuration
       value: 1.5
       objectReference: {fileID: 0}
@@ -1820,6 +1790,18 @@ PrefabInstance:
       propertyPath: EnergySystem
       value: 
       objectReference: {fileID: 619766481}
+    - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: AttackCooldown
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: AttackDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: HitLayers.m_Bits
+      value: 128
+      objectReference: {fileID: 0}
     - target: {fileID: 974238578668270715, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: GroundLayers.m_Bits
       value: 1
@@ -1896,6 +1878,10 @@ PrefabInstance:
       propertyPath: m_StreamingVersion
       value: 20241001
       objectReference: {fileID: 0}
+    - target: {fileID: 3527728704835707258, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      propertyPath: hungerSystem
+      value: 
+      objectReference: {fileID: 619766483}
     - target: {fileID: 5542111180780342640, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       propertyPath: orthographic size
       value: 10
@@ -1921,13 +1907,7 @@ PrefabInstance:
       addedObject: {fileID: 1777586919}
     - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 619766482}
-    - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 619766481}
-    - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 619766480}
   m_SourcePrefab: {fileID: 100100000, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
 --- !u!1 &1186157274
 GameObject:

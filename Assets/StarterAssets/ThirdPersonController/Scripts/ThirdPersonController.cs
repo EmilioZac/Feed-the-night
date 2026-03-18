@@ -144,6 +144,7 @@ namespace StarterAssets
 
         private bool _isAttacking = false;
         private bool _canAttack = true;
+        private float _lastAttackTime = -999f;
 
         // animation IDs
         private int _animIDCrouch;
@@ -559,10 +560,11 @@ namespace StarterAssets
             if (_input.attack)
             {
                 bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.attackDrainFlat;
-                Debug.Log($"Attack Input Detected. _canAttack: {_canAttack}, energyOk: {energyOk}, energy: {(EnergySystem != null ? EnergySystem.Energy : 0f)}");
-                if (_canAttack && energyOk)
+                bool timeOk = Time.time >= (_lastAttackTime + AttackDuration + AttackCooldown);
+                
+                if (timeOk && energyOk)
                 {
-                    Debug.Log("Starting PerformAttackCoroutine...");
+                    _lastAttackTime = Time.time;
                     StartCoroutine(PerformAttackCoroutine());
                 }
                 _input.attack = false;
@@ -625,23 +627,20 @@ namespace StarterAssets
 
             if (EnergySystem != null)
             {
-                Debug.Log($"Reducing energy. Current Energy: {EnergySystem.Energy}");
                 EnergySystem.OnAttack();
-                EnergySystem.ResetRegenDelay(0.4f);
+                // Pausamos la regeneración de estamina durante la duración del ataque
+                EnergySystem.ResetRegenDelay(AttackDuration + 0.1f);
             }
 
             Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
-            Debug.Log($"Attack OverlapSphere found {hits.Length} colliders in range {AttackRange} using mask {HitLayers.value}.");
             foreach (var hit in hits)
             {
                 if (hit.transform.root == transform.root) continue;
-                
-                Debug.Log($"Attack hit object: {hit.name} (Parent: {(hit.transform.parent != null ? hit.transform.parent.name : "None")})");
 
                 var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
                 if (npcCivil != null)
                 {
-                    Debug.Log($"Found NPCCivil script on {npcCivil.name}. Applying {AttackDamage} damage.");
+                    Debug.Log($"Golpe acertado a un NPC ({npcCivil.name}). Daño infligido: {AttackDamage}");
                     npcCivil.TakeDamage(AttackDamage);
                     continue;
                 }
@@ -649,12 +648,7 @@ namespace StarterAssets
                 HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
                 if (targetHealth != null)
                 {
-                    Debug.Log($"Found HealthSystem script on {targetHealth.name}. Applying {AttackDamage} damage.");
                     targetHealth.TakeDamage(AttackDamage);
-                }
-                else
-                {
-                    Debug.Log($"No NPCCivil or HealthSystem found on {hit.name} or its parents.");
                 }
             }
 
@@ -732,7 +726,12 @@ namespace StarterAssets
             if (_frenzyAttackTimer >= 0.5f)
             {
                 _frenzyAttackTimer = 0f;
-                if (_canAttack && !_isAttacking) StartCoroutine(PerformAttackCoroutine());
+                bool timeOk = Time.time >= (_lastAttackTime + AttackDuration + AttackCooldown);
+                if (timeOk)
+                {
+                    _lastAttackTime = Time.time;
+                    StartCoroutine(PerformAttackCoroutine());
+                }
             }
         }
 
