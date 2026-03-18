@@ -23,6 +23,8 @@ namespace FeedTheNight.Systems
         [Header("Drain Rates  (units / second)")]
         public float runDrainRate  = 4f;    // antes 8
         public float jumpDrainFlat = 5f;    // antes 10
+        public float dashDrainFlat = 15f;   // Costo del dash
+        public float attackDrainFlat = 5f;  // Costo del ataque
 
         [Header("Regen")]
         [Tooltip("Regen pasivo de energía cuando no se corre ni salta.")]
@@ -84,6 +86,20 @@ namespace FeedTheNight.Systems
         {
             if (_energy <= 0f) return;
             ModifyEnergy(-jumpDrainFlat);
+        }
+
+        /// <summary>Gasta energía de forma plana al hacer dash.</summary>
+        public void OnDash()
+        {
+            if (_energy <= 0f) return;
+            ModifyEnergy(-dashDrainFlat);
+        }
+
+        /// <summary>Gasta energía de forma plana al dar un golpe.</summary>
+        public void OnAttack()
+        {
+            if (_energy <= 0f) return;
+            ModifyEnergy(-attackDrainFlat);
         }
 
         /// <summary>

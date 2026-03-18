@@ -82,10 +82,12 @@ namespace StarterAssets
         [Header("Combat Settings")]
         public float AttackDamage = 0.5f;
         public float AttackRange = 1.5f;
+        public float AttackDuration = 0.5f;
+        public float AttackCooldown = 0.3f;
         public LayerMask HitLayers;
         public float DashDistance = 5f;
-        public float DashDuration = 0.2f;
-        public float DashCooldown = 5f;
+        public float DashDuration = 0.8f;
+        public float DashCooldown = 1f;
         public float FeedRange = 2.0f;
 
         [Header("Systems Integration")]
@@ -140,11 +142,15 @@ namespace StarterAssets
         private float _frenzyAttackTimer;
         private bool _isCamouflaged;
 
+        private bool _isAttacking = false;
+        private bool _canAttack = true;
+
         // animation IDs
         private int _animIDCrouch;
         private int _animIDAttack;
         private int _animIDBlocked;
         private int _animIDFeeding;
+        private int _animIDDash;
 
         private bool IsCurrentDeviceMouse
         {
@@ -248,6 +254,7 @@ namespace StarterAssets
             _animIDAttack = Animator.StringToHash("Attack");
             _animIDBlocked = Animator.StringToHash("Blocked");
             _animIDFeeding = Animator.StringToHash("Feeding");
+            _animIDDash = Animator.StringToHash("Dash");
         }
 
         private void GroundedCheck()
@@ -288,6 +295,20 @@ namespace StarterAssets
 
         private void Move()
         {
+            if (_isDashing || _isAttacking)
+            {
+                _controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+                
+                _speed = 0f;
+                _animationBlend = 0f;
+                if (_hasAnimator)
+                {
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    _animator.SetFloat(_animIDMotionSpeed, 0f);
+                }
+                return;
+            }
+
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
@@ -405,6 +426,8 @@ namespace StarterAssets
 
         private void JumpAndGravity()
         {
+            if (_isDashing) _input.jump = false;
+
             if (Grounded)
             {
                 // reset the fall timeout timer
@@ -426,7 +449,7 @@ namespace StarterAssets
                 // Jump
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
-                    bool energyOk = EnergySystem == null || EnergySystem.Energy >= 10f;
+                    bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.jumpDrainFlat;
                     if (energyOk && !_isCamouflaged)
                     {
                         // the square root of H * -2 * G = how much velocity needed to reach desired height
@@ -525,16 +548,48 @@ namespace StarterAssets
 
         private void HandleAdditionalActions()
         {
+            if (_isDashing || _isAttacking)
+            {
+                _input.attack = false;
+                _input.dash = false;
+                _input.interact = false;
+                return;
+            }
+
             if (_input.attack)
             {
-                PerformAttack();
+                bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.attackDrainFlat;
+                Debug.Log($"Attack Input Detected. _canAttack: {_canAttack}, energyOk: {energyOk}, energy: {(EnergySystem != null ? EnergySystem.Energy : 0f)}");
+                if (_canAttack && energyOk)
+                {
+                    Debug.Log("Starting PerformAttackCoroutine...");
+                    StartCoroutine(PerformAttackCoroutine());
+                }
                 _input.attack = false;
             }
 
-            if (_input.dash && _canDash && !_isDashing)
+            if (_input.dash)
             {
-                Vector3 moveDir = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-                StartCoroutine(PerformDash(moveDir));
+                Debug.Log($"Dash Input Detected. canDash: {_canDash}, isDashing: {_isDashing}");
+                bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.dashDrainFlat;
+                if (_canDash && !_isDashing && energyOk)
+                {
+                    Vector3 moveDir;
+                    if (_input.move != Vector2.zero)
+                    {
+                        Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+                        float targetRot = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
+                        moveDir = Quaternion.Euler(0.0f, targetRot, 0.0f) * Vector3.forward;
+                        
+                        transform.rotation = Quaternion.Euler(0.0f, targetRot, 0.0f);
+                        _targetRotation = targetRot;
+                    }
+                    else
+                    {
+                        moveDir = transform.forward;
+                    }
+                    StartCoroutine(PerformDash(moveDir));
+                }
                 _input.dash = false;
             }
 
@@ -556,25 +611,37 @@ namespace StarterAssets
             _canFeed = false;
         }
 
-        private void PerformAttack()
+        private IEnumerator PerformAttackCoroutine()
         {
-            if (_hasAnimator) _animator.SetTrigger(_animIDAttack);
-            if (_renderer != null) _renderer.material.color = Color.green;
+            Debug.Log("PerformAttackCoroutine started.");
+            _canAttack = false;
+            _isAttacking = true;
+
+            if (_hasAnimator)
+            {
+                Debug.Log("Setting 'Attack' bool to TRUE on Animator.");
+                _animator.SetBool(_animIDAttack, true);
+            }
 
             if (EnergySystem != null)
             {
-                EnergySystem.ModifyEnergy(-EnergySystem.maxEnergy * 0.005f);
+                Debug.Log($"Reducing energy. Current Energy: {EnergySystem.Energy}");
+                EnergySystem.OnAttack();
                 EnergySystem.ResetRegenDelay(0.4f);
             }
 
             Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
+            Debug.Log($"Attack OverlapSphere found {hits.Length} colliders in range {AttackRange} using mask {HitLayers.value}.");
             foreach (var hit in hits)
             {
                 if (hit.transform.root == transform.root) continue;
+                
+                Debug.Log($"Attack hit object: {hit.name} (Parent: {(hit.transform.parent != null ? hit.transform.parent.name : "None")})");
 
                 var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
                 if (npcCivil != null)
                 {
+                    Debug.Log($"Found NPCCivil script on {npcCivil.name}. Applying {AttackDamage} damage.");
                     npcCivil.TakeDamage(AttackDamage);
                     continue;
                 }
@@ -582,17 +649,48 @@ namespace StarterAssets
                 HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
                 if (targetHealth != null)
                 {
+                    Debug.Log($"Found HealthSystem script on {targetHealth.name}. Applying {AttackDamage} damage.");
                     targetHealth.TakeDamage(AttackDamage);
                 }
+                else
+                {
+                    Debug.Log($"No NPCCivil or HealthSystem found on {hit.name} or its parents.");
+                }
             }
+
+            Debug.Log($"Waiting for AttackDuration ({AttackDuration}s)...");
+            yield return new WaitForSeconds(AttackDuration);
+
+            if (_hasAnimator)
+            {
+                Debug.Log("Setting 'Attack' bool to FALSE on Animator.");
+                _animator.SetBool(_animIDAttack, false);
+            }
+            _isAttacking = false;
+
+            Debug.Log($"Waiting for AttackCooldown ({AttackCooldown}s)...");
+            yield return new WaitForSeconds(AttackCooldown);
+            _canAttack = true;
+            Debug.Log("Attack Cooldown finished. Ready to attack again.");
         }
 
         private IEnumerator PerformDash(Vector3 direction)
         {
+            Debug.Log($"Starting PerformDash. EnergySystem present: {EnergySystem != null}");
             _canDash = false;
             _isDashing = true;
 
-            if (EnergySystem != null) EnergySystem.ModifyEnergy(-EnergySystem.maxEnergy * 0.01f);
+            if (_hasAnimator)
+            {
+                Debug.Log("Triggering Dash Animation Bool to True");
+                _animator.SetBool(_animIDDash, true);
+            }
+
+            if (EnergySystem != null)
+            {
+                Debug.Log($"Reducing energy. Current Energy before dash: {EnergySystem.Energy}");
+                EnergySystem.OnDash();
+            }
 
             float startTime = Time.time;
             if (direction.magnitude < 0.1f) direction = transform.forward;
@@ -603,9 +701,16 @@ namespace StarterAssets
                 yield return null;
             }
 
+            if (_hasAnimator)
+            {
+                Debug.Log("Triggering Dash Animation Bool to False");
+                _animator.SetBool(_animIDDash, false);
+            }
             _isDashing = false;
+            Debug.Log("Dash ended. Waiting for cooldown...");
             yield return new WaitForSeconds(DashCooldown);
             _canDash = true;
+            Debug.Log("Dash Cooldown finished. Ready to dash again.");
         }
 
         private void HandleFrenzyState()
@@ -627,7 +732,7 @@ namespace StarterAssets
             if (_frenzyAttackTimer >= 0.5f)
             {
                 _frenzyAttackTimer = 0f;
-                PerformAttack();
+                if (_canAttack && !_isAttacking) StartCoroutine(PerformAttackCoroutine());
             }
         }
 
