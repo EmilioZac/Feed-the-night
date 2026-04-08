@@ -85,6 +85,8 @@ namespace StarterAssets
         public float AttackDuration = 0.5f;
         public float AttackCooldown = 0.3f;
         public LayerMask HitLayers;
+        public int MaxComboSwings = 4; // Añadido: Limite del combo
+        public float ComboResetTime = 1.0f; // Añadido: Tiempo para perder el combo
         public float DashDistance = 5f;
         public float DashDuration = 0.8f;
         public float DashCooldown = 1f;
@@ -144,7 +146,10 @@ namespace StarterAssets
 
         private bool _isAttacking = false;
         private bool _canAttack = true;
-        private float _lastAttackTime = -999f;
+        private int _currentComboStep = 0;
+        private float _lastClickTime = -999f;
+        private int _animIDComboStep;
+        private bool _comboBuffered = false;
 
         // animation IDs
         private int _animIDCrouch;
@@ -253,6 +258,7 @@ namespace StarterAssets
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDCrouch = Animator.StringToHash("Crouch");
             _animIDAttack = Animator.StringToHash("Attack");
+            _animIDComboStep = Animator.StringToHash("ComboStep");
             _animIDBlocked = Animator.StringToHash("Blocked");
             _animIDFeeding = Animator.StringToHash("Feeding");
             _animIDDash = Animator.StringToHash("Dash");
@@ -549,7 +555,7 @@ namespace StarterAssets
 
         private void HandleAdditionalActions()
         {
-            if (_isDashing || _isAttacking)
+            if (_isDashing)
             {
                 _input.attack = false;
                 _input.dash = false;
@@ -557,15 +563,64 @@ namespace StarterAssets
                 return;
             }
 
+            if (_isAttacking)
+            {
+                _input.dash = false;
+                _input.interact = false;
+                
+                // --- SISTEMA DE BUFFER DE INPUT ---
+                // Si el jugador hace click MUY rápido mientras el personaje aún está dando el puñetazo,
+                // guardamos ese click para soltarlo JUSTO cuando termine.
+                if (_input.attack)
+                {
+                    _comboBuffered = true;
+                    Debug.Log("[Combo Debug] Click guardado en BUFFER para el siguiente combo.");
+                    _input.attack = false;
+                }
+                return;
+            }
+
+            // Si llegamos aquí, no estamos atacando. ¿Teníamos un click guardado?
+            if (_comboBuffered)
+            {
+                _input.attack = true; // Fingimos que el usuario acaba de hacer click
+                _comboBuffered = false;
+                Debug.Log("[Combo Debug] Restaurando click desde el Buffer.");
+            }
+
+            // Reiniciar el combo si pasó demasiado tiempo desde el último click
+            if (_currentComboStep > 0 && Time.time > _lastClickTime + AttackDuration + ComboResetTime)
+            {
+                Debug.Log($"[Combo Debug] Se acabó el tiempo de Combo. Pasó mucho desde el click. Reiniciando a 0.");
+                _currentComboStep = 0;
+            }
+
             if (_input.attack)
             {
                 bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.attackDrainFlat;
-                bool timeOk = Time.time >= (_lastAttackTime + AttackDuration + AttackCooldown);
+                bool timeOk = Time.time >= (_lastClickTime + AttackDuration);
                 
-                if (timeOk && energyOk)
+                Debug.Log($"[Combo Debug] INTENTO DE ATAQUE -> timeOk: {timeOk}, energyOk: {energyOk}, _canAttack: {_canAttack}");
+
+                if (timeOk && energyOk && _canAttack)
                 {
-                    _lastAttackTime = Time.time;
-                    StartCoroutine(PerformAttackCoroutine());
+                    _currentComboStep++;
+                    if (_currentComboStep > MaxComboSwings)
+                    {
+                        Debug.Log($"[Combo Debug] Limite del combo superado ({MaxComboSwings}), reempezando el combo al golpe 1.");
+                        _currentComboStep = 1;
+                    }
+
+                    Debug.Log($"[Combo Debug] EJECUTANDO GOLPE. ComboStep resultante: {_currentComboStep}");
+                    _lastClickTime = Time.time;
+                    StartCoroutine(PerformAttackCoroutine(_currentComboStep));
+                }
+                else
+                {
+                    Debug.Log($"[Combo Debug] Ataque RECHAZADO. Razón probable: " + 
+                              $"({(!timeOk ? "Aún en AttackDuration" : "")} " + 
+                              $"{(!energyOk ? "Falta Energía" : "")} " + 
+                              $"{(!_canAttack ? "En Cooldown o Bloqueado (_canAttack=false)" : "")})");
                 }
                 _input.attack = false;
             }
@@ -613,15 +668,16 @@ namespace StarterAssets
             _canFeed = false;
         }
 
-        private IEnumerator PerformAttackCoroutine()
+        private IEnumerator PerformAttackCoroutine(int comboStep)
         {
-            Debug.Log("PerformAttackCoroutine started.");
+            Debug.Log($"PerformAttackCoroutine started. Combo Step: {comboStep}");
             _canAttack = false;
             _isAttacking = true;
 
             if (_hasAnimator)
             {
-                Debug.Log("Setting 'Attack' bool to TRUE on Animator.");
+                Debug.Log($"Setting 'ComboStep' to {comboStep} and 'Attack' bool to TRUE on Animator.");
+                _animator.SetInteger(_animIDComboStep, comboStep);
                 _animator.SetBool(_animIDAttack, true);
             }
 
@@ -661,11 +717,20 @@ namespace StarterAssets
                 _animator.SetBool(_animIDAttack, false);
             }
             _isAttacking = false;
-
-            Debug.Log($"Waiting for AttackCooldown ({AttackCooldown}s)...");
-            yield return new WaitForSeconds(AttackCooldown);
+            
+            // Si es el ultimo golpe del combo, forzamos un cooldown más grande
+            if (comboStep >= MaxComboSwings)
+            {
+                Debug.Log($"Waiting for full AttackCooldown ({AttackCooldown}s)...");
+                yield return new WaitForSeconds(AttackCooldown);
+            }
+            else
+            {
+                // No hay cooldown entre golpes del combo para que el Buffer funcione al instante
+            }
+            
             _canAttack = true;
-            Debug.Log("Attack Cooldown finished. Ready to attack again.");
+            Debug.Log("Attack Cooldown finished. Ready to attack/continue combo again.");
         }
 
         private IEnumerator PerformDash(Vector3 direction)
@@ -726,11 +791,12 @@ namespace StarterAssets
             if (_frenzyAttackTimer >= 0.5f)
             {
                 _frenzyAttackTimer = 0f;
-                bool timeOk = Time.time >= (_lastAttackTime + AttackDuration + AttackCooldown);
+                bool timeOk = Time.time >= (_lastClickTime + AttackDuration + AttackCooldown);
                 if (timeOk)
                 {
-                    _lastAttackTime = Time.time;
-                    StartCoroutine(PerformAttackCoroutine());
+                    _currentComboStep = (_currentComboStep % MaxComboSwings) + 1;
+                    _lastClickTime = Time.time;
+                    StartCoroutine(PerformAttackCoroutine(_currentComboStep));
                 }
             }
         }
