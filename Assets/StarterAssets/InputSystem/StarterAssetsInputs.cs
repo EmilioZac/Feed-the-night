@@ -132,6 +132,15 @@ namespace StarterAssets
 			interact = newInteractState;
 		}
 
+		private void Update()
+		{
+			// Detección manual de la tecla F para el bloqueo
+			if (Keyboard.current != null)
+			{
+				BlockInput(Keyboard.current.fKey.isPressed);
+			}
+		}
+
 		private void OnApplicationFocus(bool hasFocus)
 		{
 			SetCursorState(cursorLocked);

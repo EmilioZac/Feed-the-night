@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using StarterAssets;
 
 namespace FeedTheNight.Systems
 {
@@ -63,6 +64,17 @@ namespace FeedTheNight.Systems
         public void TakeDamage(float amount)
         {
             if (_isDead || amount <= 0f) return;
+
+            // Intentar bloquear el daño si existe el controlador
+            if (TryGetComponent<ThirdPersonController>(out var controller))
+            {
+                if (controller.TryBlock(amount))
+                {
+                    // Daño bloqueado por completo
+                    return;
+                }
+            }
+
             SetHealth(_health - amount);
             OnDamaged?.Invoke(amount);
         }

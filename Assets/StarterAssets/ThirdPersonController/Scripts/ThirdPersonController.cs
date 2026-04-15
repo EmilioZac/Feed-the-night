@@ -137,6 +137,9 @@ namespace StarterAssets
         private Color _originalColor;
         private float _damageFlashTimer;
         private float _blockDuration;
+        private float _blockResistance;
+        private float _maxBlockResistance = 3.0f;
+        private float _blockRecoveryTimer;
         private bool _canDash = true;
         private bool _isDashing = false;
         private bool _canFeed;
@@ -157,6 +160,8 @@ namespace StarterAssets
         private int _animIDBlocked;
         private int _animIDFeeding;
         private int _animIDDash;
+
+        public bool IsBlocking => (_input != null && _input.block && _blockResistance > 0);
 
         private bool IsCurrentDeviceMouse
         {
@@ -194,6 +199,8 @@ namespace StarterAssets
 
             _renderer = GetComponentInChildren<Renderer>();
             if (_renderer != null) _originalColor = _renderer.material.color;
+
+            _blockResistance = _maxBlockResistance;
 
             if (_health != null) _health.OnDamaged += (amt) => _damageFlashTimer = 0.2f;
 
@@ -368,15 +375,50 @@ namespace StarterAssets
             {
                 if (_renderer != null) _renderer.material.color = _originalColor;
 
-                if (_input.block)
+                if (_input.block && _blockResistance > 0)
                 {
                     _blockDuration += Time.deltaTime;
+                    // Decaimiento de resistencia (1 por segundo)
+                    _blockResistance -= Time.deltaTime;
+                    if (_blockResistance < 0) _blockResistance = 0;
+
                     finalSpeed *= 0.5f;
-                    if (_renderer != null) _renderer.material.color = _blockDuration > 4.0f ? new Color(1f, 0.5f, 0f) : Color.yellow;
+
+                    // Lógica de fatiga (8 segundos detectada visualmente)
+                    if (_blockDuration > 8.0f)
+                    {
+                        if (_renderer != null) _renderer.material.color = new Color(1f, 0.5f, 0f); // Naranja Fatiga
+                        // Nota: La reducción de resistencia máxima a 2 se manejará en el método de bloqueo
+                    }
+                    else if (_renderer != null)
+                    {
+                        _renderer.material.color = Color.yellow;
+                    }
                 }
                 else
                 {
+                    if (_blockDuration > 0)
+                    {
+                        // Delay de estamina de 1 segundo al dejar de bloquear
+                        if (EnergySystem != null) EnergySystem.ResetRegenDelay(1.0f);
+                    }
+
                     _blockDuration = 0f;
+                    
+                    // Recuperación de resistencia si no se está bloqueando
+                    if (_blockResistance < _maxBlockResistance)
+                    {
+                        _blockRecoveryTimer += Time.deltaTime;
+                        if (_blockRecoveryTimer >= 1.5f) // Espera 1.5s para empezar a recuperar
+                        {
+                            _blockResistance += Time.deltaTime; // Recupera 1 por segundo
+                            if (_blockResistance > _maxBlockResistance) _blockResistance = _maxBlockResistance;
+                        }
+                    }
+                    else
+                    {
+                        _blockRecoveryTimer = 0f;
+                    }
                 }
 
                 if (_input.crouch)
@@ -829,6 +871,21 @@ namespace StarterAssets
                 _closestDeadNPC = null;
                 _canFeed = false;
             }
+        }
+
+        public bool TryBlock(float damage)
+        {
+            if (!IsBlocking) return false;
+
+            if (_blockResistance > 0)
+            {
+                _blockResistance -= 0.5f; 
+                _blockRecoveryTimer = 0f;
+                Debug.Log($"[Blocking] Ataque bloqueado! Resistencia restante: {_blockResistance:F1}");
+                return true;
+            }
+
+            return false;
         }
     }
 }
