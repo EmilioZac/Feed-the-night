@@ -83,7 +83,7 @@ namespace StarterAssets
         public float AttackDamage = 0.5f;
         public float AttackRange = 1.5f;
         public float AttackDuration = 0.5f;
-        public float AttackCooldown = 0.3f;
+        public float AttackCooldown = 0.7f;
         public LayerMask HitLayers;
         public int MaxComboSwings = 4; // Añadido: Limite del combo
         public float ComboResetTime = 1.0f; // Añadido: Tiempo para perder el combo
@@ -598,7 +598,7 @@ namespace StarterAssets
             if (_input.attack)
             {
                 bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.attackDrainFlat;
-                bool timeOk = Time.time >= (_lastClickTime + AttackDuration);
+                bool timeOk = Time.time >= (_lastClickTime + AttackCooldown);
                 
                 Debug.Log($"[Combo Debug] INTENTO DE ATAQUE -> timeOk: {timeOk}, energyOk: {energyOk}, _canAttack: {_canAttack}");
 
@@ -685,7 +685,7 @@ namespace StarterAssets
             {
                 EnergySystem.OnAttack();
                 // Pausamos la regeneración de estamina durante la duración del ataque
-                EnergySystem.ResetRegenDelay(AttackDuration + 0.1f);
+                EnergySystem.ResetRegenDelay(AttackCooldown + 0.1f);
             }
 
             Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
@@ -718,16 +718,9 @@ namespace StarterAssets
             }
             _isAttacking = false;
             
-            // Si es el ultimo golpe del combo, forzamos un cooldown más grande
-            if (comboStep >= MaxComboSwings)
-            {
-                Debug.Log($"Waiting for full AttackCooldown ({AttackCooldown}s)...");
-                yield return new WaitForSeconds(AttackCooldown);
-            }
-            else
-            {
-                // No hay cooldown entre golpes del combo para que el Buffer funcione al instante
-            }
+            // Siempre esperamos el AttackCooldown para evitar spam de estamina
+            Debug.Log($"Esperando el cooldown de ataque ({AttackCooldown}s)...");
+            yield return new WaitForSeconds(AttackCooldown - AttackDuration > 0 ? AttackCooldown - AttackDuration : 0.05f);
             
             _canAttack = true;
             Debug.Log("Attack Cooldown finished. Ready to attack/continue combo again.");
