@@ -65,18 +65,18 @@ namespace FeedTheNight.Systems
         {
             if (_isDead || amount <= 0f) return;
 
+            float damageToApply = amount;
+
             // Intentar bloquear el daño si existe el controlador
             if (TryGetComponent<ThirdPersonController>(out var controller))
             {
-                if (controller.TryBlock(amount))
-                {
-                    // Daño bloqueado por completo
-                    return;
-                }
+                damageToApply = controller.TryBlock(amount);
             }
 
-            SetHealth(_health - amount);
-            OnDamaged?.Invoke(amount);
+            if (damageToApply <= 0f) return;
+
+            SetHealth(_health - damageToApply);
+            OnDamaged?.Invoke(damageToApply);
         }
 
         /// <summary>Cura al jugador (sin superar maxHealth).</summary>

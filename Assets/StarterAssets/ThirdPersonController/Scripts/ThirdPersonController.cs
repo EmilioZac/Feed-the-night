@@ -160,8 +160,11 @@ namespace StarterAssets
         private int _animIDBlocked;
         private int _animIDFeeding;
         private int _animIDDash;
+        private int _animIDBlockedHit;
+        private int _animIDDeath;
+        private bool _isDeadStateInitialized = false;
 
-        public bool IsBlocking => (_input != null && _input.block && _blockResistance > 0);
+        public bool IsBlocking => (_input != null && _input.block);
 
         private bool IsCurrentDeviceMouse
         {
@@ -224,9 +227,18 @@ namespace StarterAssets
             // --- DEATH STATE ---
             if (_health != null && !_health.IsAlive)
             {
-                if (_renderer != null) _renderer.material.color = Color.black;
+                if (!_isDeadStateInitialized)
+                {
+                    _isDeadStateInitialized = true;
+                    if (_hasAnimator)
+                    {
+                        _animator.SetBool(_animIDDeath, true);
+                    }
+                    // Subimos un poco al jugador para evitar que atraviese el suelo
+                    transform.position += Vector3.up * 0.1f; 
+                }
+
                 _verticalVelocity = 0f;
-                Time.timeScale = 0f;
                 return;
             }
 
@@ -269,6 +281,8 @@ namespace StarterAssets
             _animIDBlocked = Animator.StringToHash("Blocked");
             _animIDFeeding = Animator.StringToHash("Feeding");
             _animIDDash = Animator.StringToHash("Dash");
+            _animIDBlockedHit = Animator.StringToHash("BlockedHit");
+            _animIDDeath = Animator.StringToHash("Death");
         }
 
         private void GroundedCheck()
@@ -330,7 +344,7 @@ namespace StarterAssets
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            if (_input.move == Vector2.zero || IsBlocking) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -359,7 +373,7 @@ namespace StarterAssets
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
             // Speed Modifiers & Logic
-            float finalSpeed = _speed;
+            float finalSpeed = IsBlocking ? 0f : _speed;
             
             if (_isCamouflaged)
             {
@@ -375,24 +389,28 @@ namespace StarterAssets
             {
                 if (_renderer != null) _renderer.material.color = _originalColor;
 
-                if (_input.block && _blockResistance > 0)
+                if (_input.block)
                 {
                     _blockDuration += Time.deltaTime;
-                    // Decaimiento de resistencia (1 por segundo)
-                    _blockResistance -= Time.deltaTime;
-                    if (_blockResistance < 0) _blockResistance = 0;
+                    // Consumo de Energía real (barra azul) -> 1 cada 2 segundos (0.5/s)
+                    if (EnergySystem != null && EnergySystem.Energy > 0)
+                    {
+                        EnergySystem.ModifyEnergy(-Time.deltaTime * 0.5f);
+                    }
 
                     finalSpeed *= 0.5f;
 
                     // Lógica de fatiga (8 segundos detectada visualmente)
-                    if (_blockDuration > 8.0f)
+                    // Determinamos si el bloqueo está debilitado (por tiempo o por falta de energía)
+                    bool isExhausted = (_blockDuration > 5.0f) || (EnergySystem != null && EnergySystem.Energy <= 0);
+
+                    if (isExhausted)
                     {
                         if (_renderer != null) _renderer.material.color = new Color(1f, 0.5f, 0f); // Naranja Fatiga
-                        // Nota: La reducción de resistencia máxima a 2 se manejará en el método de bloqueo
                     }
                     else if (_renderer != null)
                     {
-                        _renderer.material.color = Color.yellow;
+                        _renderer.material.color = Color.yellow; // Bloqueo Perfecto visualmente
                     }
                 }
                 else
@@ -438,7 +456,7 @@ namespace StarterAssets
 
             // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
+            if (_input.move != Vector2.zero && !IsBlocking)
             {
                 _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
                                   _mainCamera.transform.eulerAngles.y;
@@ -469,7 +487,7 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
                 _animator.SetBool(_animIDCrouch, _input.crouch);
-                _animator.SetBool(_animIDBlocked, _input.block);
+                _animator.SetBool(_animIDBlocked, IsBlocking);
             }
         }
 
@@ -716,6 +734,18 @@ namespace StarterAssets
             _canAttack = false;
             _isAttacking = true;
 
+            // Valores base
+            float currentDamage = AttackDamage;
+            float currentDuration = AttackDuration;
+
+            // Potenciar el cuarto golpe del combo
+            if (comboStep == 4)
+            {
+                currentDamage *= 2f; // Doble de daño
+                currentDuration += 0.8f; // 1 segundo extra de duración
+                Debug.Log($"[Combo] ¡GOLPE FINAL! Daño potenciado: {currentDamage}, Duración extendida: {currentDuration}");
+            }
+
             if (_hasAnimator)
             {
                 Debug.Log($"Setting 'ComboStep' to {comboStep} and 'Attack' bool to TRUE on Animator.");
@@ -738,20 +768,20 @@ namespace StarterAssets
                 var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
                 if (npcCivil != null)
                 {
-                    Debug.Log($"Golpe acertado a un NPC ({npcCivil.name}). Daño infligido: {AttackDamage}");
-                    npcCivil.TakeDamage(AttackDamage);
+                    Debug.Log($"Golpe acertado a un NPC ({npcCivil.name}). Daño infligido: {currentDamage}");
+                    npcCivil.TakeDamage(currentDamage);
                     continue;
                 }
 
                 HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
                 if (targetHealth != null)
                 {
-                    targetHealth.TakeDamage(AttackDamage);
+                    targetHealth.TakeDamage(currentDamage);
                 }
             }
 
-            Debug.Log($"Waiting for AttackDuration ({AttackDuration}s)...");
-            yield return new WaitForSeconds(AttackDuration);
+            Debug.Log($"Waiting for AttackDuration ({currentDuration}s)...");
+            yield return new WaitForSeconds(currentDuration);
 
             if (_hasAnimator)
             {
@@ -873,19 +903,38 @@ namespace StarterAssets
             }
         }
 
-        public bool TryBlock(float damage)
+        /// <summary>
+        /// Intenta bloquear el daño. Devuelve la cantidad de daño que el jugador REALMENTE recibe.
+        /// </summary>
+        public float TryBlock(float damage)
         {
-            if (!IsBlocking) return false;
+            if (!IsBlocking) return damage;
 
-            if (_blockResistance > 0)
+            // Activar trigger de impacto bloqueado
+            if (_hasAnimator) _animator.SetTrigger(_animIDBlockedHit);
+
+            // Bloqueo debilitado si no hay energía O si ha pasado el tiempo límite de 5s
+            bool isExhausted = (EnergySystem != null && EnergySystem.Energy <= 0) || (_blockDuration >= 5.0f);
+
+            if (EnergySystem != null)
             {
-                _blockResistance -= 0.5f; 
-                _blockRecoveryTimer = 0f;
-                Debug.Log($"[Blocking] Ataque bloqueado! Resistencia restante: {_blockResistance:F1}");
-                return true;
+                // Un impacto siempre drena algo de energía extra
+                EnergySystem.ModifyEnergy(-1f); 
+                EnergySystem.ResetRegenDelay(1.5f);
             }
 
-            return false;
+            if (!isExhausted)
+            {
+                Debug.Log($"[Blocking] ¡BLOQUEO PERFECTO! Daño absorbido: {damage}. Energía restante: {(EnergySystem != null ? EnergySystem.Energy : 0):F1}");
+                return 0f; 
+            }
+            else
+            {
+                float finalDamage = damage * 0.5f;
+                string reason = (EnergySystem != null && EnergySystem.Energy <= 0) ? "Sin Energía" : "Tiempo Límite";
+                Debug.Log($"[Blocking] Bloqueo Debilitado ({reason}). Recibiendo el 50%: {finalDamage}. Energía: {(EnergySystem != null ? EnergySystem.Energy : 0):F1}");
+                return finalDamage; 
+            }
         }
     }
 }
