@@ -79,17 +79,6 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
-        [Header("Combat Settings")]
-        public float AttackDamage = 0.5f;
-        public float AttackRange = 1.5f;
-        public float AttackDuration = 0.5f;
-        public float AttackCooldown = 0.7f;
-        public LayerMask HitLayers;
-        public int MaxComboSwings = 4; // Añadido: Limite del combo
-        public float ComboResetTime = 1.0f; // Añadido: Tiempo para perder el combo
-        public float DashDistance = 5f;
-        public float DashDuration = 0.8f;
-        public float DashCooldown = 1f;
         public float FeedRange = 2.0f;
 
         [Header("Systems Integration")]
@@ -137,8 +126,7 @@ namespace StarterAssets
         private float _blockResistance;
         private float _maxBlockResistance = 3.0f;
         private float _blockRecoveryTimer;
-        private bool _canDash = true;
-        private bool _isDashing = false;
+        private PlayerCombat _combat;
         private bool _canFeed;
         private GameObject _closestDeadNPC;
         private float _frenzyAttackTimer;
@@ -148,12 +136,6 @@ namespace StarterAssets
         private int _animIDFeed;
         private bool _isCamouflaged;
 
-        private bool _isAttacking = false;
-        private bool _canAttack = true;
-        private int _currentComboStep = 0;
-        private float _lastClickTime = -999f;
-        private int _animIDComboStep;
-        private bool _comboBuffered = false;
 
         // animation IDs
         private int _animIDCrouch;
@@ -164,7 +146,7 @@ namespace StarterAssets
         private int _animIDDeath;
         private bool _isDeadStateInitialized = false;
 
-        public bool IsBlocking => (_input != null && _input.block);
+        public bool IsBlocking => (_combat != null && _combat.IsBlocking);
 
         private bool IsCurrentDeviceMouse
         {
@@ -199,6 +181,8 @@ namespace StarterAssets
             _hunger = GetComponent<HungerSystem>();
 
             if (EnergySystem == null) EnergySystem = GetComponent<EnergySystem>();
+            _combat = GetComponent<PlayerCombat>();
+            if (_combat == null) _combat = gameObject.AddComponent<PlayerCombat>();
 
             _visuals = GetComponent<PlayerVisuals>();
             if (_visuals == null) _visuals = gameObject.AddComponent<PlayerVisuals>();
@@ -275,7 +259,6 @@ namespace StarterAssets
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDCrouch = Animator.StringToHash("Crouch");
             _animIDAttack = Animator.StringToHash("Attack");
-            _animIDComboStep = Animator.StringToHash("ComboStep");
             _animIDBlocked = Animator.StringToHash("Blocked");
             _animIDFeed = Animator.StringToHash("Feed");
             _animIDDash = Animator.StringToHash("Dash");
@@ -321,7 +304,7 @@ namespace StarterAssets
 
         private void Move()
         {
-            if (_isDashing || _isAttacking)
+            if (_combat.IsDashing || _combat.IsAttacking)
             {
                 _controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
                 
@@ -470,7 +453,7 @@ namespace StarterAssets
 
         private void JumpAndGravity()
         {
-            if (_isDashing) _input.jump = false;
+            if (_combat.IsDashing) _input.jump = false;
 
             if (Grounded)
             {
@@ -592,98 +575,7 @@ namespace StarterAssets
 
         private void HandleAdditionalActions()
         {
-            if (_isDashing)
-            {
-                _input.attack = false;
-                _input.dash = false;
-                return;
-            }
-
-            if (_isAttacking)
-            {
-                _input.dash = false;
-                
-                // --- SISTEMA DE BUFFER DE INPUT ---
-                // Si el jugador hace click MUY rápido mientras el personaje aún está dando el puñetazo,
-                // guardamos ese click para soltarlo JUSTO cuando termine.
-                if (_input.attack)
-                {
-                    _comboBuffered = true;
-                    Debug.Log("[Combo Debug] Click guardado en BUFFER para el siguiente combo.");
-                    _input.attack = false;
-                }
-                return;
-            }
-
-            // Si llegamos aquí, no estamos atacando. ¿Teníamos un click guardado?
-            if (_comboBuffered)
-            {
-                _input.attack = true; // Fingimos que el usuario acaba de hacer click
-                _comboBuffered = false;
-                Debug.Log("[Combo Debug] Restaurando click desde el Buffer.");
-            }
-
-            // Reiniciar el combo si pasó demasiado tiempo desde el último click
-            if (_currentComboStep > 0 && Time.time > _lastClickTime + AttackDuration + ComboResetTime)
-            {
-                Debug.Log($"[Combo Debug] Se acabó el tiempo de Combo. Pasó mucho desde el click. Reiniciando a 0.");
-                _currentComboStep = 0;
-            }
-
-            if (_input.attack)
-            {
-                bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.attackDrainFlat;
-                bool timeOk = Time.time >= (_lastClickTime + AttackCooldown);
-                
-                Debug.Log($"[Combo Debug] INTENTO DE ATAQUE -> timeOk: {timeOk}, energyOk: {energyOk}, _canAttack: {_canAttack}");
-
-                if (timeOk && energyOk && _canAttack)
-                {
-                    _currentComboStep++;
-                    if (_currentComboStep > MaxComboSwings)
-                    {
-                        Debug.Log($"[Combo Debug] Limite del combo superado ({MaxComboSwings}), reempezando el combo al golpe 1.");
-                        _currentComboStep = 1;
-                    }
-
-                    Debug.Log($"[Combo Debug] EJECUTANDO GOLPE. ComboStep resultante: {_currentComboStep}");
-                    _lastClickTime = Time.time;
-                    StartCoroutine(PerformAttackCoroutine(_currentComboStep));
-                }
-                else
-                {
-                    Debug.Log($"[Combo Debug] Ataque RECHAZADO. Razón probable: " + 
-                              $"({(!timeOk ? "Aún en AttackDuration" : "")} " + 
-                              $"{(!energyOk ? "Falta Energía" : "")} " + 
-                              $"{(!_canAttack ? "En Cooldown o Bloqueado (_canAttack=false)" : "")})");
-                }
-                _input.attack = false;
-            }
-
-            if (_input.dash)
-            {
-                Debug.Log($"Dash Input Detected. canDash: {_canDash}, isDashing: {_isDashing}");
-                bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.dashDrainFlat;
-                if (_canDash && !_isDashing && energyOk)
-                {
-                    Vector3 moveDir;
-                    if (_input.move != Vector2.zero)
-                    {
-                        Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-                        float targetRot = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
-                        moveDir = Quaternion.Euler(0.0f, targetRot, 0.0f) * Vector3.forward;
-                        
-                        transform.rotation = Quaternion.Euler(0.0f, targetRot, 0.0f);
-                        _targetRotation = targetRot;
-                    }
-                    else
-                    {
-                        moveDir = transform.forward;
-                    }
-                    StartCoroutine(PerformDash(moveDir));
-                }
-                _input.dash = false;
-            }
+            _combat.HandleCombatActions();
 
             // Lógica de comer manteniendo presionado
             if (_input.feed && _canFeed && _closestDeadNPC != null)
@@ -723,114 +615,6 @@ namespace StarterAssets
             }
         }
 
-        private IEnumerator PerformAttackCoroutine(int comboStep)
-        {
-            Debug.Log($"PerformAttackCoroutine started. Combo Step: {comboStep}");
-            _canAttack = false;
-            _isAttacking = true;
-
-            // Valores base
-            float currentDamage = AttackDamage;
-            float currentDuration = AttackDuration;
-
-            // Potenciar el cuarto golpe del combo
-            if (comboStep == 4)
-            {
-                currentDamage *= 2f; // Doble de daño
-                currentDuration += 0.8f; // 1 segundo extra de duración
-                Debug.Log($"[Combo] ¡GOLPE FINAL! Daño potenciado: {currentDamage}, Duración extendida: {currentDuration}");
-            }
-
-            if (_hasAnimator)
-            {
-                Debug.Log($"Setting 'ComboStep' to {comboStep} and 'Attack' bool to TRUE on Animator.");
-                _animator.SetInteger(_animIDComboStep, comboStep);
-                _animator.SetBool(_animIDAttack, true);
-            }
-
-            if (EnergySystem != null)
-            {
-                EnergySystem.OnAttack();
-                // Pausamos la regeneración de estamina durante la duración del ataque
-                EnergySystem.ResetRegenDelay(AttackCooldown + 0.1f);
-            }
-
-            Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
-            foreach (var hit in hits)
-            {
-                if (hit.transform.root == transform.root) continue;
-
-                var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
-                if (npcCivil != null)
-                {
-                    Debug.Log($"Golpe acertado a un NPC ({npcCivil.name}). Daño infligido: {currentDamage}");
-                    npcCivil.TakeDamage(currentDamage);
-                    continue;
-                }
-
-                HealthSystem targetHealth = hit.GetComponentInParent<HealthSystem>();
-                if (targetHealth != null)
-                {
-                    targetHealth.TakeDamage(currentDamage);
-                }
-            }
-
-            Debug.Log($"Waiting for AttackDuration ({currentDuration}s)...");
-            yield return new WaitForSeconds(currentDuration);
-
-            if (_hasAnimator)
-            {
-                Debug.Log("Setting 'Attack' bool to FALSE on Animator.");
-                _animator.SetBool(_animIDAttack, false);
-            }
-            _isAttacking = false;
-            
-            // Siempre esperamos el AttackCooldown para evitar spam de estamina
-            Debug.Log($"Esperando el cooldown de ataque ({AttackCooldown}s)...");
-            yield return new WaitForSeconds(AttackCooldown - AttackDuration > 0 ? AttackCooldown - AttackDuration : 0.05f);
-            
-            _canAttack = true;
-            Debug.Log("Attack Cooldown finished. Ready to attack/continue combo again.");
-        }
-
-        private IEnumerator PerformDash(Vector3 direction)
-        {
-            Debug.Log($"Starting PerformDash. EnergySystem present: {EnergySystem != null}");
-            _canDash = false;
-            _isDashing = true;
-
-            if (_hasAnimator)
-            {
-                Debug.Log("Triggering Dash Animation Bool to True");
-                _animator.SetBool(_animIDDash, true);
-            }
-
-            if (EnergySystem != null)
-            {
-                Debug.Log($"Reducing energy. Current Energy before dash: {EnergySystem.Energy}");
-                EnergySystem.OnDash();
-            }
-
-            float startTime = Time.time;
-            if (direction.magnitude < 0.1f) direction = transform.forward;
-
-            while (Time.time < startTime + DashDuration)
-            {
-                _controller.Move(direction * (DashDistance / DashDuration) * Time.deltaTime);
-                yield return null;
-            }
-
-            if (_hasAnimator)
-            {
-                Debug.Log("Triggering Dash Animation Bool to False");
-                _animator.SetBool(_animIDDash, false);
-            }
-            _isDashing = false;
-            Debug.Log("Dash ended. Waiting for cooldown...");
-            yield return new WaitForSeconds(DashCooldown);
-            _canDash = true;
-            Debug.Log("Dash Cooldown finished. Ready to dash again.");
-        }
 
         private void HandleFrenzyState()
         {
@@ -851,12 +635,11 @@ namespace StarterAssets
             if (_frenzyAttackTimer >= 0.5f)
             {
                 _frenzyAttackTimer = 0f;
-                bool timeOk = Time.time >= (_lastClickTime + AttackDuration + AttackCooldown);
-                if (timeOk)
+                bool timeOk = Time.time >= (_combat.AttackDuration + _combat.AttackCooldown); // Simplified check or use state
+                if (_combat.CanAttack)
                 {
-                    _currentComboStep = (_currentComboStep % MaxComboSwings) + 1;
-                    _lastClickTime = Time.time;
-                    StartCoroutine(PerformAttackCoroutine(_currentComboStep));
+                    int step = 1; // Simplified for now or logic to track combo
+                    _combat.ExecuteFrenzyAttack(step);
                 }
             }
         }
@@ -905,33 +688,7 @@ namespace StarterAssets
         /// </summary>
         public float TryBlock(float damage)
         {
-            if (!IsBlocking) return damage;
-
-            // Activar trigger de impacto bloqueado
-            if (_hasAnimator) _animator.SetTrigger(_animIDBlockedHit);
-
-            // Bloqueo debilitado si no hay energía O si ha pasado el tiempo límite de 5s
-            bool isExhausted = (EnergySystem != null && EnergySystem.Energy <= 0) || (_blockDuration >= 5.0f);
-
-            if (EnergySystem != null)
-            {
-                // Un impacto siempre drena algo de energía extra
-                EnergySystem.ModifyEnergy(-1f); 
-                EnergySystem.ResetRegenDelay(1.5f);
-            }
-
-            if (!isExhausted)
-            {
-                Debug.Log($"[Blocking] ¡BLOQUEO PERFECTO! Daño absorbido: {damage}. Energía restante: {(EnergySystem != null ? EnergySystem.Energy : 0):F1}");
-                return 0f; 
-            }
-            else
-            {
-                float finalDamage = damage * 0.5f;
-                string reason = (EnergySystem != null && EnergySystem.Energy <= 0) ? "Sin Energía" : "Tiempo Límite";
-                Debug.Log($"[Blocking] Bloqueo Debilitado ({reason}). Recibiendo el 50%: {finalDamage}. Energía: {(EnergySystem != null ? EnergySystem.Energy : 0):F1}");
-                return finalDamage; 
-            }
+            return _combat.TryBlock(damage, _blockDuration);
         }
     }
 }
