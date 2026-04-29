@@ -132,10 +132,7 @@ namespace StarterAssets
 
         private bool _hasAnimator;
 
-        // Visuals & State
-        private Renderer _renderer;
-        private Color _originalColor;
-        private float _damageFlashTimer;
+        private PlayerVisuals _visuals;
         private float _blockDuration;
         private float _blockResistance;
         private float _maxBlockResistance = 3.0f;
@@ -203,12 +200,10 @@ namespace StarterAssets
 
             if (EnergySystem == null) EnergySystem = GetComponent<EnergySystem>();
 
-            _renderer = GetComponentInChildren<Renderer>();
-            if (_renderer != null) _originalColor = _renderer.material.color;
+            _visuals = GetComponent<PlayerVisuals>();
+            if (_visuals == null) _visuals = gameObject.AddComponent<PlayerVisuals>();
 
             _blockResistance = _maxBlockResistance;
-
-            if (_health != null) _health.OnDamaged += (amt) => _damageFlashTimer = 0.2f;
 
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
@@ -381,73 +376,52 @@ namespace StarterAssets
             if (_isCamouflaged)
             {
                 finalSpeed *= 0.4f;
-                if (_renderer != null) _renderer.material.color = Color.white;
             }
-            else if (_damageFlashTimer > 0)
+
+            if (_input.block)
             {
-                _damageFlashTimer -= Time.deltaTime;
-                if (_renderer != null) _renderer.material.color = Color.red;
+                _blockDuration += Time.deltaTime;
+                // Consumo de Energía real (barra azul) -> 1 cada 2 segundos (0.5/s)
+                if (EnergySystem != null && EnergySystem.Energy > 0)
+                {
+                    EnergySystem.ModifyEnergy(-Time.deltaTime * 0.5f);
+                }
+                finalSpeed *= 0.5f;
             }
             else
             {
-                if (_renderer != null) _renderer.material.color = _originalColor;
-
-                if (_input.block)
+                if (_blockDuration > 0)
                 {
-                    _blockDuration += Time.deltaTime;
-                    // Consumo de Energía real (barra azul) -> 1 cada 2 segundos (0.5/s)
-                    if (EnergySystem != null && EnergySystem.Energy > 0)
-                    {
-                        EnergySystem.ModifyEnergy(-Time.deltaTime * 0.5f);
-                    }
+                    // Delay de estamina de 1 segundo al dejar de bloquear
+                    if (EnergySystem != null) EnergySystem.ResetRegenDelay(1.0f);
+                }
 
-                    finalSpeed *= 0.5f;
-
-                    // Lógica de fatiga (8 segundos detectada visualmente)
-                    // Determinamos si el bloqueo está debilitado (por tiempo o por falta de energía)
-                    bool isExhausted = (_blockDuration > 5.0f) || (EnergySystem != null && EnergySystem.Energy <= 0);
-
-                    if (isExhausted)
+                _blockDuration = 0f;
+                
+                // Recuperación de resistencia si no se está bloqueando
+                if (_blockResistance < _maxBlockResistance)
+                {
+                    _blockRecoveryTimer += Time.deltaTime;
+                    if (_blockRecoveryTimer >= 1.5f) // Espera 1.5s para empezar a recuperar
                     {
-                        if (_renderer != null) _renderer.material.color = new Color(1f, 0.5f, 0f); // Naranja Fatiga
-                    }
-                    else if (_renderer != null)
-                    {
-                        _renderer.material.color = Color.yellow; // Bloqueo Perfecto visualmente
+                        _blockResistance += Time.deltaTime; // Recupera 1 por segundo
+                        if (_blockResistance > _maxBlockResistance) _blockResistance = _maxBlockResistance;
                     }
                 }
                 else
                 {
-                    if (_blockDuration > 0)
-                    {
-                        // Delay de estamina de 1 segundo al dejar de bloquear
-                        if (EnergySystem != null) EnergySystem.ResetRegenDelay(1.0f);
-                    }
-
-                    _blockDuration = 0f;
-                    
-                    // Recuperación de resistencia si no se está bloqueando
-                    if (_blockResistance < _maxBlockResistance)
-                    {
-                        _blockRecoveryTimer += Time.deltaTime;
-                        if (_blockRecoveryTimer >= 1.5f) // Espera 1.5s para empezar a recuperar
-                        {
-                            _blockResistance += Time.deltaTime; // Recupera 1 por segundo
-                            if (_blockResistance > _maxBlockResistance) _blockResistance = _maxBlockResistance;
-                        }
-                    }
-                    else
-                    {
-                        _blockRecoveryTimer = 0f;
-                    }
-                }
-
-                if (_input.crouch)
-                {
-                    finalSpeed *= 0.4f;
-                    if (_renderer != null) _renderer.material.color = Color.blue;
+                    _blockRecoveryTimer = 0f;
                 }
             }
+
+            if (_input.crouch)
+            {
+                finalSpeed *= 0.4f;
+            }
+
+            // Actualizar visuales centralizadamente
+            bool isExhausted = (_blockDuration > 5.0f) || (EnergySystem != null && EnergySystem.Energy <= 0);
+            _visuals.UpdateVisuals(_isCamouflaged, _input.block, isExhausted, _input.crouch);
 
             // check if running for energy system
             bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_isCamouflaged && !_isFeedingAction;

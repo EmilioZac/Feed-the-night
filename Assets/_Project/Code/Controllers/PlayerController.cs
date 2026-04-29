@@ -186,11 +186,11 @@ namespace FeedTheNight.Controllers
                 PerformAttack();
             }
 
-            // Feed Logic (Consumption)
-            if (isFeeding && canFeed)
-            {
-                ConsumeNPC();
-            }
+            // Feed Logic (Consumption) - REMOVED TO PREVENT CONFLICT WITH ThirdPersonController
+            // if (isFeeding && canFeed)
+            // {
+            //     ConsumeNPC();
+            // }
             
             bool isBlocking = Keyboard.current != null && Keyboard.current.fKey.isPressed;
             bool isDashingInput = Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
