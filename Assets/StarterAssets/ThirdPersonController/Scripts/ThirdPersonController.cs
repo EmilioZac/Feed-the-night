@@ -145,6 +145,10 @@ namespace StarterAssets
         private bool _canFeed;
         private GameObject _closestDeadNPC;
         private float _frenzyAttackTimer;
+        private float _continuousFeedTimer;
+        private float _continuousFeedTickTimer;
+        private bool _isFeedingAction;
+        private int _animIDFeed;
         private bool _isCamouflaged;
 
         private bool _isAttacking = false;
@@ -158,7 +162,6 @@ namespace StarterAssets
         private int _animIDCrouch;
         private int _animIDAttack;
         private int _animIDBlocked;
-        private int _animIDFeeding;
         private int _animIDDash;
         private int _animIDBlockedHit;
         private int _animIDDeath;
@@ -279,7 +282,7 @@ namespace StarterAssets
             _animIDAttack = Animator.StringToHash("Attack");
             _animIDComboStep = Animator.StringToHash("ComboStep");
             _animIDBlocked = Animator.StringToHash("Blocked");
-            _animIDFeeding = Animator.StringToHash("Feeding");
+            _animIDFeed = Animator.StringToHash("Feed");
             _animIDDash = Animator.StringToHash("Dash");
             _animIDBlockedHit = Animator.StringToHash("BlockedHit");
             _animIDDeath = Animator.StringToHash("Death");
@@ -344,7 +347,7 @@ namespace StarterAssets
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero || IsBlocking) targetSpeed = 0.0f;
+            if (_input.move == Vector2.zero || IsBlocking || _isFeedingAction) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -373,7 +376,7 @@ namespace StarterAssets
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
             // Speed Modifiers & Logic
-            float finalSpeed = IsBlocking ? 0f : _speed;
+            float finalSpeed = (IsBlocking || _isFeedingAction) ? 0f : _speed;
             
             if (_isCamouflaged)
             {
@@ -447,7 +450,7 @@ namespace StarterAssets
             }
 
             // check if running for energy system
-            bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_isCamouflaged;
+            bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_isCamouflaged && !_isFeedingAction;
             if (EnergySystem != null) EnergySystem.SetRunning(isActuallyRunning);
             if (!isActuallyRunning && _input.sprint) finalSpeed = MoveSpeed; // Force walk speed if cannot run
 
@@ -471,7 +474,7 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // move the player
-            if (!_input.interact || !_canFeed) // Prevent movement while feeding if we want to lock it
+            if (!_isFeedingAction) // Prevent movement while feeding if we want to lock it
             {
                 _controller.Move(targetDirection.normalized * (finalSpeed * Time.deltaTime) +
                                  new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
@@ -619,14 +622,12 @@ namespace StarterAssets
             {
                 _input.attack = false;
                 _input.dash = false;
-                _input.interact = false;
                 return;
             }
 
             if (_isAttacking)
             {
                 _input.dash = false;
-                _input.interact = false;
                 
                 // --- SISTEMA DE BUFFER DE INPUT ---
                 // Si el jugador hace click MUY rápido mientras el personaje aún está dando el puñetazo,
@@ -710,22 +711,42 @@ namespace StarterAssets
                 _input.dash = false;
             }
 
-            if (_input.interact)
+            // Lógica de comer manteniendo presionado
+            if (_input.feed && _canFeed && _closestDeadNPC != null)
             {
-                if (_canFeed)
+                _isFeedingAction = true;
+                _continuousFeedTimer += Time.deltaTime;
+                _continuousFeedTickTimer += Time.deltaTime;
+
+                if (_continuousFeedTimer <= 8.0f)
                 {
-                    ConsumeNPC();
+                    if (_continuousFeedTickTimer >= 1.0f)
+                    {
+                        if (_hunger != null) _hunger.ModifyHunger(2.5f);
+                        _continuousFeedTickTimer -= 1.0f;
+                    }
                 }
-                _input.interact = false;
+                else
+                {
+                    // Al terminar los 8 segundos, destruimos el NPC
+                    Destroy(_closestDeadNPC);
+                    _closestDeadNPC = null;
+                    _canFeed = false;
+                    _isFeedingAction = false;
+                    _input.feed = false;
+                }
+            }
+            else
+            {
+                _isFeedingAction = false;
+                _continuousFeedTimer = 0f;
+                _continuousFeedTickTimer = 0f;
             }
 
             if (_hasAnimator)
             {
-                _animator.SetBool(_animIDFeeding, _input.interact && _canFeed);
+                _animator.SetBool(_animIDFeed, _isFeedingAction);
             }
-
-            // Reset canFeed per frame (it will be set in OnTriggerStay)
-            _canFeed = false;
         }
 
         private IEnumerator PerformAttackCoroutine(int comboStep)
@@ -892,14 +913,16 @@ namespace StarterAssets
             }
         }
 
-        private void ConsumeNPC()
+        private void OnTriggerExit(Collider other)
         {
-            if (_closestDeadNPC != null)
+            if (other.CompareTag("npc"))
             {
-                if (_hunger != null) _hunger.Feed(HungerSystem.NPCType.Civil);
-                Destroy(_closestDeadNPC);
-                _closestDeadNPC = null;
-                _canFeed = false;
+                var npcScript = other.gameObject.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
+                if (npcScript != null && _closestDeadNPC == npcScript.gameObject)
+                {
+                    _canFeed = false;
+                    _closestDeadNPC = null;
+                }
             }
         }
 

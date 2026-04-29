@@ -18,6 +18,7 @@ namespace StarterAssets
 		public bool dash;
 		public bool camouflage;
 		public bool interact;
+		public bool feed;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -79,6 +80,11 @@ namespace StarterAssets
 		{
 			InteractInput(value.isPressed);
 		}
+
+		public void OnFeed(InputValue value)
+		{
+			FeedInput(value.isPressed);
+		}
 #endif
 
 
@@ -132,12 +138,23 @@ namespace StarterAssets
 			interact = newInteractState;
 		}
 
+		public void FeedInput(bool newFeedState)
+		{
+			feed = newFeedState;
+		}
+
 		private void Update()
 		{
 			// Detección manual de la tecla F para el bloqueo
 			if (Keyboard.current != null)
 			{
 				BlockInput(Keyboard.current.fKey.isPressed);
+			}
+
+			// Detección manual de la tecla E para comer (feed)
+			if (Keyboard.current != null)
+			{
+				FeedInput(Keyboard.current.eKey.isPressed);
 			}
 		}
 
