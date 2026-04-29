@@ -32,9 +32,6 @@ namespace StarterAssets
         [Tooltip("Acceleration and deceleration")]
         public float SpeedChangeRate = 10.0f;
 
-        public AudioClip LandingAudioClip;
-        public AudioClip[] FootstepAudioClips;
-        [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
 
         [Space(10)]
         [Tooltip("The height the player can jump")]
@@ -79,7 +76,6 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
-        public float FeedRange = 2.0f;
 
         [Header("Systems Integration")]
         public EnergySystem EnergySystem;
@@ -102,12 +98,6 @@ namespace StarterAssets
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
-        // animation IDs
-        private int _animIDSpeed;
-        private int _animIDGrounded;
-        private int _animIDJump;
-        private int _animIDFreeFall;
-        private int _animIDMotionSpeed;
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -127,23 +117,11 @@ namespace StarterAssets
         private float _maxBlockResistance = 3.0f;
         private float _blockRecoveryTimer;
         private PlayerCombat _combat;
-        private bool _canFeed;
-        private GameObject _closestDeadNPC;
-        private float _frenzyAttackTimer;
-        private float _continuousFeedTimer;
-        private float _continuousFeedTickTimer;
-        private bool _isFeedingAction;
-        private int _animIDFeed;
-        private bool _isCamouflaged;
+        private PlayerInteraction _interaction;
+        private PlayerFrenzyState _frenzy;
 
 
-        // animation IDs
-        private int _animIDCrouch;
-        private int _animIDAttack;
-        private int _animIDBlocked;
-        private int _animIDDash;
-        private int _animIDBlockedHit;
-        private int _animIDDeath;
+        private PlayerAnimationController _anim;
         private bool _isDeadStateInitialized = false;
 
         public bool IsBlocking => (_combat != null && _combat.IsBlocking);
@@ -183,6 +161,16 @@ namespace StarterAssets
             if (EnergySystem == null) EnergySystem = GetComponent<EnergySystem>();
             _combat = GetComponent<PlayerCombat>();
             if (_combat == null) _combat = gameObject.AddComponent<PlayerCombat>();
+            _anim = GetComponentInChildren<PlayerAnimationController>();
+            if (_anim == null) _anim = gameObject.AddComponent<PlayerAnimationController>();
+
+            if (GetComponentInChildren<PlayerAudioController>() == null) gameObject.AddComponent<PlayerAudioController>();
+
+            _interaction = GetComponent<PlayerInteraction>();
+            if (_interaction == null) _interaction = gameObject.AddComponent<PlayerInteraction>();
+
+            _frenzy = GetComponent<PlayerFrenzyState>();
+            if (_frenzy == null) _frenzy = gameObject.AddComponent<PlayerFrenzyState>();
 
             _visuals = GetComponent<PlayerVisuals>();
             if (_visuals == null) _visuals = gameObject.AddComponent<PlayerVisuals>();
@@ -195,7 +183,6 @@ namespace StarterAssets
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
-            AssignAnimationIDs();
 
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
@@ -212,9 +199,9 @@ namespace StarterAssets
                 if (!_isDeadStateInitialized)
                 {
                     _isDeadStateInitialized = true;
-                    if (_hasAnimator)
+                    if (_anim != null)
                     {
-                        _animator.SetBool(_animIDDeath, true);
+                        _anim.TriggerDeath();
                     }
                     // Subimos un poco al jugador para evitar que atraviese el suelo
                     transform.position += Vector3.up * 0.1f; 
@@ -227,17 +214,10 @@ namespace StarterAssets
             // --- FRENZY STATE ---
             if (_hunger != null && _hunger.IsFrenzy)
             {
-                HandleFrenzyState();
-                _input.jump = false; // Disable jump in frenzy
+                _frenzy.UpdateFrenzy(_verticalVelocity);
                 return;
             }
 
-            // --- CAMOUFLAGE TOGGLE ---
-            if (_input.camouflage)
-            {
-                _isCamouflaged = !_isCamouflaged;
-                _input.camouflage = false; // Reset toggle
-            }
 
             JumpAndGravity();
             GroundedCheck();
@@ -250,21 +230,6 @@ namespace StarterAssets
             CameraRotation();
         }
 
-        private void AssignAnimationIDs()
-        {
-            _animIDSpeed = Animator.StringToHash("Speed");
-            _animIDGrounded = Animator.StringToHash("Grounded");
-            _animIDJump = Animator.StringToHash("Jump");
-            _animIDFreeFall = Animator.StringToHash("FreeFall");
-            _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-            _animIDCrouch = Animator.StringToHash("Crouch");
-            _animIDAttack = Animator.StringToHash("Attack");
-            _animIDBlocked = Animator.StringToHash("Blocked");
-            _animIDFeed = Animator.StringToHash("Feed");
-            _animIDDash = Animator.StringToHash("Dash");
-            _animIDBlockedHit = Animator.StringToHash("BlockedHit");
-            _animIDDeath = Animator.StringToHash("Death");
-        }
 
         private void GroundedCheck()
         {
@@ -275,10 +240,7 @@ namespace StarterAssets
                 QueryTriggerInteraction.Ignore);
 
             // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDGrounded, Grounded);
-            }
+            _anim.SetGrounded(Grounded);
         }
 
         private void CameraRotation()
@@ -310,11 +272,7 @@ namespace StarterAssets
                 
                 _speed = 0f;
                 _animationBlend = 0f;
-                if (_hasAnimator)
-                {
-                    _animator.SetFloat(_animIDSpeed, 0f);
-                    _animator.SetFloat(_animIDMotionSpeed, 0f);
-                }
+                _anim.SetMoveSpeed(0f, 0f);
                 return;
             }
 
@@ -325,7 +283,8 @@ namespace StarterAssets
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero || IsBlocking || _isFeedingAction) targetSpeed = 0.0f;
+            // if there is no input, set the target speed to 0
+            if (_input.move == Vector2.zero || IsBlocking || _interaction.IsFeeding) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -354,9 +313,9 @@ namespace StarterAssets
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
             // Speed Modifiers & Logic
-            float finalSpeed = (IsBlocking || _isFeedingAction) ? 0f : _speed;
+            float finalSpeed = (IsBlocking || _interaction.IsFeeding) ? 0f : _speed;
             
-            if (_isCamouflaged)
+            if (_interaction.IsCamouflaged)
             {
                 finalSpeed *= 0.4f;
             }
@@ -404,10 +363,10 @@ namespace StarterAssets
 
             // Actualizar visuales centralizadamente
             bool isExhausted = (_blockDuration > 5.0f) || (EnergySystem != null && EnergySystem.Energy <= 0);
-            _visuals.UpdateVisuals(_isCamouflaged, _input.block, isExhausted, _input.crouch);
+            _visuals.UpdateVisuals(_interaction.IsCamouflaged, _input.block, isExhausted, _input.crouch);
 
             // check if running for energy system
-            bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_isCamouflaged && !_isFeedingAction;
+            bool isActuallyRunning = _input.move != Vector2.zero && _input.sprint && (EnergySystem == null || EnergySystem.CanRun) && !_input.crouch && !_input.block && !_interaction.IsCamouflaged && !_interaction.IsFeeding;
             if (EnergySystem != null) EnergySystem.SetRunning(isActuallyRunning);
             if (!isActuallyRunning && _input.sprint) finalSpeed = MoveSpeed; // Force walk speed if cannot run
 
@@ -431,7 +390,7 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // move the player
-            if (!_isFeedingAction) // Prevent movement while feeding if we want to lock it
+            if (!_interaction.IsFeeding) // Prevent movement while feeding if we want to lock it
             {
                 _controller.Move(targetDirection.normalized * (finalSpeed * Time.deltaTime) +
                                  new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
@@ -442,13 +401,9 @@ namespace StarterAssets
             }
 
             // update animator if using character
-            if (_hasAnimator)
-            {
-                _animator.SetFloat(_animIDSpeed, _animationBlend);
-                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-                _animator.SetBool(_animIDCrouch, _input.crouch);
-                _animator.SetBool(_animIDBlocked, IsBlocking);
-            }
+            _anim.SetMoveSpeed(_animationBlend, inputMagnitude);
+            _anim.SetCrouch(_input.crouch);
+            _anim.SetBlocking(IsBlocking);
         }
 
         private void JumpAndGravity()
@@ -461,11 +416,8 @@ namespace StarterAssets
                 _fallTimeoutDelta = FallTimeout;
 
                 // update animator if using character
-                if (_hasAnimator)
-                {
-                    _animator.SetBool(_animIDJump, false);
-                    _animator.SetBool(_animIDFreeFall, false);
-                }
+                _anim.SetJump(false);
+                _anim.SetFreeFall(false);
 
                 // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
@@ -477,16 +429,13 @@ namespace StarterAssets
                 if (_input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
                     bool energyOk = EnergySystem == null || EnergySystem.Energy >= EnergySystem.jumpDrainFlat;
-                    if (energyOk && !_isCamouflaged)
+                    if (energyOk && !_interaction.IsCamouflaged)
                     {
                         // the square root of H * -2 * G = how much velocity needed to reach desired height
                         _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 
                         // update animator if using character
-                        if (_hasAnimator)
-                        {
-                            _animator.SetBool(_animIDJump, true);
-                        }
+                        _anim.SetJump(true);
 
                         if (EnergySystem != null) EnergySystem.OnJump();
                     }
@@ -514,11 +463,8 @@ namespace StarterAssets
                 }
                 else
                 {
-                    // update animator if using character
-                    if (_hasAnimator)
-                    {
-                        _animator.SetBool(_animIDFreeFall, true);
-                    }
+                // update animator if using character
+                _anim.SetFreeFall(true);
                 }
 
                 // if we are not grounded, do not jump
@@ -553,135 +499,14 @@ namespace StarterAssets
                 GroundedRadius);
         }
 
-        private void OnFootstep(AnimationEvent animationEvent)
-        {
-            if (animationEvent.animatorClipInfo.weight > 0.5f)
-            {
-                if (FootstepAudioClips.Length > 0)
-                {
-                    var index = Random.Range(0, FootstepAudioClips.Length);
-                    AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
-                }
-            }
-        }
-
-        private void OnLand(AnimationEvent animationEvent)
-        {
-            if (animationEvent.animatorClipInfo.weight > 0.5f)
-            {
-                AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
-            }
-        }
 
         private void HandleAdditionalActions()
         {
             _combat.HandleCombatActions();
-
-            // Lógica de comer manteniendo presionado
-            if (_input.feed && _canFeed && _closestDeadNPC != null)
-            {
-                _isFeedingAction = true;
-                _continuousFeedTimer += Time.deltaTime;
-                _continuousFeedTickTimer += Time.deltaTime;
-
-                if (_continuousFeedTimer <= 8.0f)
-                {
-                    if (_continuousFeedTickTimer >= 1.0f)
-                    {
-                        if (_hunger != null) _hunger.ModifyHunger(2.5f);
-                        _continuousFeedTickTimer -= 1.0f;
-                    }
-                }
-                else
-                {
-                    // Al terminar los 8 segundos, destruimos el NPC
-                    Destroy(_closestDeadNPC);
-                    _closestDeadNPC = null;
-                    _canFeed = false;
-                    _isFeedingAction = false;
-                    _input.feed = false;
-                }
-            }
-            else
-            {
-                _isFeedingAction = false;
-                _continuousFeedTimer = 0f;
-                _continuousFeedTickTimer = 0f;
-            }
-
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDFeed, _isFeedingAction);
-            }
+            _interaction.HandleInteractions();
         }
 
 
-        private void HandleFrenzyState()
-        {
-            GameObject nearestNPC = FindNearestNPC();
-            Vector3 move = Vector3.zero;
-
-            if (nearestNPC != null)
-            {
-                Vector3 direction = (nearestNPC.transform.position - transform.position);
-                direction.y = 0;
-                if (direction.magnitude > 1.5f) move = direction.normalized;
-            }
-
-            float frenzySpeed = SprintSpeed * 0.8f;
-            _controller.Move(move * frenzySpeed * Time.deltaTime + new Vector3(0f, _verticalVelocity, 0f) * Time.deltaTime);
-
-            _frenzyAttackTimer += Time.deltaTime;
-            if (_frenzyAttackTimer >= 0.5f)
-            {
-                _frenzyAttackTimer = 0f;
-                bool timeOk = Time.time >= (_combat.AttackDuration + _combat.AttackCooldown); // Simplified check or use state
-                if (_combat.CanAttack)
-                {
-                    int step = 1; // Simplified for now or logic to track combo
-                    _combat.ExecuteFrenzyAttack(step);
-                }
-            }
-        }
-
-        private GameObject FindNearestNPC()
-        {
-            GameObject[] npcs = GameObject.FindGameObjectsWithTag("npc");
-            GameObject nearest = null;
-            float minDist = Mathf.Infinity;
-            foreach (GameObject npc in npcs)
-            {
-                float dist = Vector3.Distance(npc.transform.position, transform.position);
-                if (dist < minDist) { nearest = npc; minDist = dist; }
-            }
-            return nearest;
-        }
-
-        private void OnTriggerStay(Collider other)
-        {
-            if (other.CompareTag("npc"))
-            {
-                var npcScript = other.gameObject.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
-                if (npcScript != null && npcScript.IsDead)
-                {
-                    _canFeed = true;
-                    _closestDeadNPC = npcScript.gameObject;
-                }
-            }
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (other.CompareTag("npc"))
-            {
-                var npcScript = other.gameObject.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
-                if (npcScript != null && _closestDeadNPC == npcScript.gameObject)
-                {
-                    _canFeed = false;
-                    _closestDeadNPC = null;
-                }
-            }
-        }
 
         /// <summary>
         /// Intenta bloquear el daño. Devuelve la cantidad de daño que el jugador REALMENTE recibe.

@@ -31,31 +31,21 @@ namespace StarterAssets
         private float _lastClickTime = -999f;
         private bool _comboBuffered = false;
 
-        // Dependencies
+        private PlayerAnimationController _anim;
         private StarterAssetsInputs _input;
-        private Animator _animator;
         private CharacterController _controller;
         private EnergySystem _energySystem;
         private GameObject _mainCamera;
 
-        // Animation IDs (Temporary until Phase 4)
-        private int _animIDAttack;
-        private int _animIDComboStep;
-        private int _animIDDash;
-        private int _animIDBlockedHit;
-
-        private void Awake()
+        private void Start()
         {
             _input = GetComponent<StarterAssetsInputs>();
-            _animator = GetComponent<Animator>();
             _controller = GetComponent<CharacterController>();
             _energySystem = GetComponent<EnergySystem>();
+            _anim = GetComponentInChildren<PlayerAnimationController>();
             _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
 
-            _animIDAttack = Animator.StringToHash("Attack");
-            _animIDComboStep = Animator.StringToHash("ComboStep");
-            _animIDDash = Animator.StringToHash("Dash");
-            _animIDBlockedHit = Animator.StringToHash("BlockedHit");
+            if (HitLayers == 0) HitLayers = LayerMask.GetMask("npc", "NPC", "Enemy", "Default");
         }
 
         public void HandleCombatActions()
@@ -158,10 +148,9 @@ namespace StarterAssets
                 currentDuration += 0.8f;
             }
 
-            if (_animator != null)
+            if (_anim != null)
             {
-                _animator.SetInteger(_animIDComboStep, comboStep);
-                _animator.SetBool(_animIDAttack, true);
+                _anim.SetAttack(true, comboStep);
             }
 
             if (_energySystem != null)
@@ -171,8 +160,10 @@ namespace StarterAssets
             }
 
             Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1f, AttackRange, HitLayers);
+            Debug.Log($"[Combat Debug] Attack Sphere casted. Range: {AttackRange}, Hits found: {hits.Length}, Mask: {HitLayers.value}");
             foreach (var hit in hits)
             {
+                Debug.Log($"[Combat Debug] Hit detected on: {hit.name} (Layer: {LayerMask.LayerToName(hit.gameObject.layer)})");
                 if (hit.transform.root == transform.root) continue;
 
                 var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
@@ -191,7 +182,7 @@ namespace StarterAssets
 
             yield return new WaitForSeconds(currentDuration);
 
-            if (_animator != null) _animator.SetBool(_animIDAttack, false);
+            if (_anim != null) _anim.SetAttack(false);
             IsAttacking = false;
 
             yield return new WaitForSeconds(Mathf.Max(AttackCooldown - AttackDuration, 0.05f));
@@ -203,7 +194,7 @@ namespace StarterAssets
             CanDash = false;
             IsDashing = true;
 
-            if (_animator != null) _animator.SetBool(_animIDDash, true);
+            if (_anim != null) _anim.SetDash(true);
             if (_energySystem != null) _energySystem.OnDash();
 
             float startTime = Time.time;
@@ -215,7 +206,7 @@ namespace StarterAssets
                 yield return null;
             }
 
-            if (_animator != null) _animator.SetBool(_animIDDash, false);
+            if (_anim != null) _anim.SetDash(false);
             IsDashing = false;
             yield return new WaitForSeconds(DashCooldown);
             CanDash = true;
@@ -225,7 +216,7 @@ namespace StarterAssets
         {
             if (!IsBlocking) return damage;
 
-            if (_animator != null) _animator.SetTrigger(_animIDBlockedHit);
+            if (_anim != null) _anim.TriggerBlockedHit();
 
             bool isExhausted = (_energySystem != null && _energySystem.Energy <= 0) || (blockDuration >= 5.0f);
 
