@@ -21,6 +21,8 @@ namespace StarterAssets
         private int _animIDDash;
         private int _animIDBlockedHit;
         private int _animIDDeath;
+        private int _animIDCrouchStart;
+        private int _animIDCrouchEnd;
 
         private void Awake()
         {
@@ -45,6 +47,8 @@ namespace StarterAssets
             _animIDDash = Animator.StringToHash("Dash");
             _animIDBlockedHit = Animator.StringToHash("BlockedHit");
             _animIDDeath = Animator.StringToHash("Death");
+            _animIDCrouchStart = Animator.StringToHash("CrouchStart");
+            _animIDCrouchEnd = Animator.StringToHash("CrouchEnd");
         }
 
         public void SetMoveSpeed(float blend, float inputMagnitude)
@@ -114,6 +118,18 @@ namespace StarterAssets
         {
             if (!_hasAnimator) return;
             _animator.SetBool(_animIDDeath, true);
+        }
+
+        public void TriggerCrouchStart()
+        {
+            if (!_hasAnimator) return;
+            _animator.SetTrigger(_animIDCrouchStart);
+        }
+
+        public void TriggerCrouchEnd()
+        {
+            if (!_hasAnimator) return;
+            _animator.SetTrigger(_animIDCrouchEnd);
         }
     }
 }

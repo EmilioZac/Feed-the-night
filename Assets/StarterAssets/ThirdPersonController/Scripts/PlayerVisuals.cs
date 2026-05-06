@@ -5,79 +5,69 @@ namespace StarterAssets
 {
     public class PlayerVisuals : MonoBehaviour
     {
-        private Renderer _renderer;
-        private Color _originalColor;
+        private Renderer[] _renderers;
+        private Color _originalColor = Color.white;
         private float _damageFlashTimer;
         private HealthSystem _health;
+        private MaterialPropertyBlock _propBlock;
+        private static readonly int _baseColorProp = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
         {
-            _renderer = GetComponentInChildren<Renderer>();
-            if (_renderer != null) _originalColor = _renderer.material.color;
+            _renderers = GetComponentsInChildren<Renderer>();
+            _propBlock = new MaterialPropertyBlock();
+            
+            // Intentar capturar el color original del primer renderer con color
+            foreach (var r in _renderers)
+            {
+                if (r.HasPropertyBlock()) continue;
+                if (r.sharedMaterial.HasProperty("_BaseColor"))
+                {
+                    _originalColor = r.sharedMaterial.GetColor("_BaseColor");
+                    break;
+                }
+                else if (r.sharedMaterial.HasProperty("_Color"))
+                {
+                    _originalColor = r.sharedMaterial.color;
+                    break;
+                }
+            }
             _health = GetComponent<HealthSystem>();
         }
 
-        private void OnEnable()
-        {
-            if (_health != null)
-            {
-                _health.OnDamaged += HandleDamaged;
-            }
-        }
+        private void OnEnable() => _health.OnDamaged += HandleDamaged;
+        private void OnDisable() => _health.OnDamaged -= HandleDamaged;
 
-        private void OnDisable()
-        {
-            if (_health != null)
-            {
-                _health.OnDamaged -= HandleDamaged;
-            }
-        }
-
-        private void HandleDamaged(float amount)
-        {
-            _damageFlashTimer = 0.2f;
-        }
+        private void HandleDamaged(float amount) => _damageFlashTimer = 0.2f;
 
         private void Update()
         {
-            if (_damageFlashTimer > 0)
-            {
-                _damageFlashTimer -= Time.deltaTime;
-            }
+            if (_damageFlashTimer > 0) _damageFlashTimer -= Time.deltaTime;
         }
 
         public void UpdateVisuals(bool isCamouflaged, bool isBlocking, bool isExhausted, bool isCrouching)
         {
-            if (isCamouflaged)
-            {
-                SetColor(Color.white);
-            }
-            else if (_damageFlashTimer > 0)
-            {
-                SetColor(Color.red);
-            }
-            else if (isBlocking)
-            {
-                if (isExhausted)
-                    SetColor(new Color(1f, 0.5f, 0f)); // Naranja Fatiga
-                else
-                    SetColor(Color.yellow); // Bloqueo Perfecto
-            }
-            else if (isCrouching)
-            {
-                SetColor(Color.blue);
-            }
-            else
-            {
-                SetColor(_originalColor);
-            }
+            Color targetColor = _originalColor;
+
+            if (isCamouflaged) targetColor = Color.white;
+            else if (_damageFlashTimer > 0) targetColor = Color.red;
+            else if (isBlocking) targetColor = isExhausted ? new Color(1f, 0.5f, 0f) : Color.yellow;
+            else if (isCrouching) targetColor = Color.blue;
+
+            ApplyColor(targetColor);
         }
 
-        private void SetColor(Color color)
+        private void ApplyColor(Color color)
         {
-            if (_renderer != null)
+            if (_renderers == null) return;
+            
+            _propBlock.SetColor(_baseColorProp, color);
+            // Fallback para shaders estándar si no usan _BaseColor
+            _propBlock.SetColor("_Color", color);
+
+            foreach (var r in _renderers)
             {
-                _renderer.material.color = color;
+                r.SetPropertyBlock(_propBlock);
             }
         }
     }

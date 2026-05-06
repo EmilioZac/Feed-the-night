@@ -1142,6 +1142,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7305416952e63942a0eb9c5d8711dd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.Systems.HealthSystem
+--- !u!114 &619766492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 619766472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e542f67d998b0b0489ebc71ddd59f583, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.PlayerCombat
+  AttackDamage: 5
+  AttackRange: 1.5
+  AttackDuration: 0.8
+  AttackCooldown: 1
+  HitLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  MaxComboSwings: 4
+  ComboResetTime: 1
+  DashDistance: 5
+  DashDuration: 1.2
+  DashCooldown: 1
+--- !u!114 &619766493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 619766472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa5d8fc04c220b1469e759b5d21fd430, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.PlayerAnimationController
 --- !u!1 &680493263
 GameObject:
   m_ObjectHideFlags: 0
@@ -1912,6 +1948,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
       insertIndex: -1
       addedObject: {fileID: 619766481}
+    - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 619766492}
+    - targetCorrespondingSourceObject: {fileID: 974238578668270704, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 619766493}
   m_SourcePrefab: {fileID: 100100000, guid: c708a3b79cd542b42bbfedb17e213bc1, type: 3}
 --- !u!1 &1186157274
 GameObject:

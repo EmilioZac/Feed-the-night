@@ -13,19 +13,27 @@ namespace StarterAssets
 
         private void Awake()
         {
-            _controller = GetComponent<CharacterController>();
+            _controller = GetComponentInParent<CharacterController>();
         }
 
         private void OnFootstep(AnimationEvent animationEvent)
         {
-            // Eliminada la comprobación de weight porque animatorClipInfo puede ser null en ciertos contextos
-            if (FootstepAudioClips != null && FootstepAudioClips.Length > 0)
+            if (FootstepAudioClips == null || FootstepAudioClips.Length == 0) return;
+
+            // Seguridad 1: Solo sonar si la animación es la dominante (peso > 0.5)
+            if (animationEvent.animatorClipInfo.weight < 0.5f) return;
+
+            // Seguridad 2: Solo sonar si el personaje realmente se está moviendo horizontalmente
+            if (_controller != null)
             {
-                var index = Random.Range(0, FootstepAudioClips.Length);
-                if (FootstepAudioClips[index] != null)
-                {
-                    AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
-                }
+                float horizontalSpeed = new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude;
+                if (horizontalSpeed < 0.1f) return;
+            }
+
+            var index = Random.Range(0, FootstepAudioClips.Length);
+            if (FootstepAudioClips[index] != null)
+            {
+                AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
 
