@@ -30,14 +30,10 @@ namespace StarterAssets
         public void HandleInteractions()
         {
             // --- CAMOUFLAGE ---
-            if (_input.camouflage)
-            {
-                IsCamouflaged = !IsCamouflaged;
-                _input.camouflage = false;
-            }
+            IsCamouflaged = _input.camouflage;
 
             // --- FEEDING ---
-            if (_input.feed && _canFeed && _closestDeadNPC != null)
+            if (_input.feed && _canFeed && _closestDeadNPC != null && !IsCamouflaged)
             {
                 IsFeeding = true;
                 _continuousFeedTimer += Time.deltaTime;

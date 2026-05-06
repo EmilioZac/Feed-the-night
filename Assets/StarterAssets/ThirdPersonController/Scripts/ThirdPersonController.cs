@@ -203,7 +203,7 @@ namespace StarterAssets
         }
 
         private void JumpAndGravity() {
-            if (_combat.IsDashing || _input.crouch) { _input.jump = false; return; }
+            if (_combat.IsDashing || _input.crouch || _input.camouflage) { _input.jump = false; return; }
             if (Grounded) {
                 _fallTimeoutDelta = FallTimeout; _anim.SetJump(false); _anim.SetFreeFall(false); if (_verticalVelocity < 0) _verticalVelocity = -2f;
                 if (_input.jump && _jumpTimeoutDelta <= 0 && (EnergySystem?.Energy >= EnergySystem?.jumpDrainFlat) && !_interaction.IsCamouflaged) {

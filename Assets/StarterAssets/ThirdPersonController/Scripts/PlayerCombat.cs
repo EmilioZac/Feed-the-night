@@ -50,7 +50,7 @@ namespace StarterAssets
 
         public void HandleCombatActions()
         {
-            if (IsDashing || _input.crouch)
+            if (IsDashing || _input.crouch || _input.camouflage)
             {
                 _input.attack = false;
                 _input.dash = false;

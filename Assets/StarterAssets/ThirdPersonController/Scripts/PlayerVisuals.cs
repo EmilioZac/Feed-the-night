@@ -49,10 +49,8 @@ namespace StarterAssets
         {
             Color targetColor = _originalColor;
 
-            if (isCamouflaged) targetColor = Color.white;
-            else if (_damageFlashTimer > 0) targetColor = Color.red;
+            if (_damageFlashTimer > 0) targetColor = Color.red;
             else if (isBlocking) targetColor = isExhausted ? new Color(1f, 0.5f, 0f) : Color.yellow;
-            else if (isCrouching) targetColor = Color.blue;
 
             ApplyColor(targetColor);
         }

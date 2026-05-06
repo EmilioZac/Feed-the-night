@@ -162,6 +162,12 @@ namespace StarterAssets
 			{
 				CrouchInput(!crouch);
 			}
+
+			// Detección manual de la tecla T para camuflaje (toggle)
+			if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
+			{
+				CamouflageInput(!camouflage);
+			}
 		}
 
 		private void OnApplicationFocus(bool hasFocus)
