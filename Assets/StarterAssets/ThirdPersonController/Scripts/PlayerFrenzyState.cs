@@ -10,6 +10,7 @@ namespace StarterAssets
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private ThirdPersonController _mainController;
+        private PlayerInteraction _interaction;
 
         private float _frenzyAttackTimer;
 
@@ -20,6 +21,7 @@ namespace StarterAssets
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
             _mainController = GetComponent<ThirdPersonController>();
+            _interaction = GetComponent<PlayerInteraction>();
         }
 
         public void UpdateFrenzy(float verticalVelocity)
@@ -33,6 +35,12 @@ namespace StarterAssets
 
         private void HandleFrenzyState(float verticalVelocity)
         {
+            if (_interaction != null && _interaction.IsFeeding)
+            {
+                _frenzyAttackTimer = 0f;
+                return;
+            }
+
             GameObject nearestNPC = FindNearestNPC();
             Vector3 move = Vector3.zero;
 

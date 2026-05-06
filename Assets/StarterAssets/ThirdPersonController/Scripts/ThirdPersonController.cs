@@ -63,6 +63,9 @@ namespace StarterAssets
         private PlayerAnimationController _anim;
         private float _blockDuration, _blockResistance, _maxBlockResistance = 3.0f, _blockRecoveryTimer;
         private bool _isDeadStateInitialized = false, _wasCrouching = false;
+        private bool _isScreaming = false;
+        private float _screamTimer = 0f;
+        private bool _wasFrenzy = false;
 
         public bool IsBlocking => (_combat != null && _combat.IsBlocking);
         private bool IsCurrentDeviceMouse => 
@@ -108,8 +111,40 @@ namespace StarterAssets
                 }
                 _verticalVelocity = 0f; return;
             }
-            if (_hunger != null && _hunger.IsFrenzy) { _frenzy.UpdateFrenzy(_verticalVelocity); return; }
+            
+            if (_hunger != null && _hunger.IsFrenzy) { 
+                HandleFrenzyScream();
+                if (!_isScreaming) {
+                    _frenzy.UpdateFrenzy(_verticalVelocity); 
+                    _interaction.HandleInteractions(); // Permitir comer en frenzy
+                }
+                return; 
+            }
+            else {
+                _isScreaming = false; _screamTimer = 0f; _wasFrenzy = false;
+            }
+
             JumpAndGravity(); GroundedCheck(); Move(); HandleAdditionalActions();
+        }
+
+        private void HandleFrenzyScream()
+        {
+            if (!_wasFrenzy) {
+                _wasFrenzy = true;
+                _isScreaming = true;
+                _screamTimer = 3.0f;
+                _anim?.SetScream(true);
+                _speed = _animationBlend = 0f;
+                _anim?.SetMoveSpeed(0f, 0f);
+            }
+
+            if (_isScreaming) {
+                _screamTimer -= Time.deltaTime;
+                if (_screamTimer <= 0f) {
+                    _isScreaming = false;
+                    _anim?.SetScream(false);
+                }
+            }
         }
 
         private void LateUpdate()
@@ -159,6 +194,11 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0, Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime), 0);
             }
 
+            if (_interaction.IsCamouflaged) {
+                _input.crouch = false;
+                _input.block = false;
+            }
+
             // Detección de transiciones de agachado
             if (_input.crouch && !_wasCrouching) _anim.TriggerCrouchStart();
             else if (!_input.crouch && _wasCrouching) _anim.TriggerCrouchEnd();
@@ -186,7 +226,8 @@ namespace StarterAssets
                 if (_blockDuration > 0) EnergySystem?.ResetRegenDelay(1f);
                 _blockDuration = 0f; UpdateBlockResistance();
             }
-            if (_interaction.IsCamouflaged || _input.crouch) s *= 0.4f;
+            if (_input.crouch) s *= 0.4f;
+            else if (_interaction.IsCamouflaged) s *= 0.8f;
             
             // Forzar no correr si está agachado
             bool run = _input.move != Vector2.zero && _input.sprint && !(_input.crouch) && (EnergySystem?.CanRun ?? true) && !_input.block && !_interaction.IsCamouflaged && !_interaction.IsFeeding;

@@ -33,7 +33,10 @@ namespace StarterAssets
             IsCamouflaged = _input.camouflage;
 
             // --- FEEDING ---
-            if (_input.feed && _canFeed && _closestDeadNPC != null && !IsCamouflaged)
+            bool isFrenzy = (_hunger != null && _hunger.IsFrenzy);
+            bool wantToFeed = (_input.feed || (isFrenzy && _canFeed)) && !IsCamouflaged;
+
+            if (wantToFeed && _canFeed && _closestDeadNPC != null)
             {
                 IsFeeding = true;
                 _continuousFeedTimer += Time.deltaTime;
