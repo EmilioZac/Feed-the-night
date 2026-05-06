@@ -166,7 +166,14 @@ namespace StarterAssets
 
             Vector3 move = _interaction.IsFeeding ? Vector3.zero : Quaternion.Euler(0, _targetRotation, 0) * Vector3.forward * _speed;
             _controller.Move(move * Time.deltaTime + new Vector3(0, _verticalVelocity, 0) * Time.deltaTime);
-            _anim.SetMoveSpeed(_animationBlend, inputMag); _anim.SetCrouch(_input.crouch); _anim.SetBlocking(IsBlocking);
+            
+            // Ajustar velocidad del animator para agachado (umbral del animator es 1.9)
+            float animSpeed = _animationBlend;
+            if (_input.crouch && animSpeed > 0.01f) animSpeed = 2.0f; 
+
+            _anim.SetMoveSpeed(animSpeed, inputMag); 
+            _anim.SetCrouch(_input.crouch); 
+            _anim.SetBlocking(IsBlocking);
         }
 
         private float CalculateTargetSpeed()

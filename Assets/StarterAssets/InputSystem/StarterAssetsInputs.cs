@@ -53,7 +53,7 @@ namespace StarterAssets
 
 		public void OnCrouch(InputValue value)
 		{
-			CrouchInput(value.isPressed);
+			if (value.isPressed) CrouchInput(!crouch);
 		}
 
 		public void OnAttack(InputValue value)
@@ -155,6 +155,12 @@ namespace StarterAssets
 			if (Keyboard.current != null)
 			{
 				FeedInput(Keyboard.current.eKey.isPressed);
+			}
+
+			// Detección manual de la tecla C para agacharse (toggle)
+			if (Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame)
+			{
+				CrouchInput(!crouch);
 			}
 		}
 
