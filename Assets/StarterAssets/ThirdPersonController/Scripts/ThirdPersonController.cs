@@ -112,9 +112,17 @@ namespace StarterAssets
                 _verticalVelocity = 0f; return;
             }
             
-            if (_hunger != null && _hunger.IsFrenzy) { 
+            bool isInFrenzyRange = _hunger != null && _hunger.IsFrenzy;
+            bool isPersistingDueToFeeding = _wasFrenzy && _interaction.IsFeeding;
+            bool shouldBeInFrenzy = isInFrenzyRange || isPersistingDueToFeeding;
+
+            if (shouldBeInFrenzy) { 
+                if (isPersistingDueToFeeding && !isInFrenzyRange) {
+                    Debug.Log($"[Frenzy Debug] Persisting frenzy state because player is still feeding (Hunger: {_hunger.Hunger:F1}%)");
+                }
                 HandleFrenzyScream();
                 if (!_isScreaming) {
+                    GroundedCheck();
                     _frenzy.UpdateFrenzy(_verticalVelocity); 
                     _interaction.HandleInteractions(); // Permitir comer en frenzy
                 }
@@ -132,7 +140,7 @@ namespace StarterAssets
             if (!_wasFrenzy) {
                 _wasFrenzy = true;
                 _isScreaming = true;
-                _screamTimer = 3.0f;
+                _screamTimer = 1.5f;
                 _anim?.SetScream(true);
                 _speed = _animationBlend = 0f;
                 _anim?.SetMoveSpeed(0f, 0f);

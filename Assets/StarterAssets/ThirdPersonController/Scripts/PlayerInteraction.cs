@@ -25,6 +25,7 @@ namespace StarterAssets
             _input = GetComponent<StarterAssetsInputs>();
             _hunger = GetComponent<HungerSystem>();
             _anim = GetComponentInChildren<PlayerAnimationController>();
+            Debug.Log($"[Interaction Debug] PlayerInteraction Start. Anim: {_anim != null}");
         }
 
         public void HandleInteractions()
@@ -36,8 +37,11 @@ namespace StarterAssets
             bool isFrenzy = (_hunger != null && _hunger.IsFrenzy);
             bool wantToFeed = (_input.feed || (isFrenzy && _canFeed)) && !IsCamouflaged;
 
-            if (wantToFeed && _canFeed && _closestDeadNPC != null)
+            // Si ya estamos comiendo, ignoramos el 'wantToFeed' y seguimos hasta terminar los 8s
+            if (IsFeeding || (wantToFeed && _canFeed && _closestDeadNPC != null))
             {
+                if (!IsFeeding) Debug.Log("[Interaction Debug] Started feeding session.");
+                
                 IsFeeding = true;
                 _continuousFeedTimer += Time.deltaTime;
                 _continuousFeedTickTimer += Time.deltaTime;
@@ -46,17 +50,23 @@ namespace StarterAssets
                 {
                     if (_continuousFeedTickTimer >= 1.0f)
                     {
-                        if (_hunger != null) _hunger.ModifyHunger(2.5f);
+                        if (_hunger != null) {
+                            _hunger.ModifyHunger(5.0f); // DUPLICADO de 2.5f a 5.0f
+                            Debug.Log($"[Interaction Debug] Feeding... Current Hunger: {_hunger.Hunger}");
+                        }
                         _continuousFeedTickTimer -= 1.0f;
                     }
                 }
                 else
                 {
+                    Debug.Log($"[Interaction Debug] Feeding finished. Final Hunger: {(_hunger != null ? _hunger.Hunger : 0)}");
                     Destroy(_closestDeadNPC);
                     _closestDeadNPC = null;
                     _canFeed = false;
                     IsFeeding = false;
                     _input.feed = false;
+                    _continuousFeedTimer = 0f;
+                    _continuousFeedTickTimer = 0f;
                 }
             }
             else
@@ -68,6 +78,7 @@ namespace StarterAssets
 
             if (_anim != null)
             {
+                if (IsFeeding) Debug.Log("[Interaction Debug] Setting Animator 'Feed' to true");
                 _anim.SetFeed(IsFeeding);
             }
         }
