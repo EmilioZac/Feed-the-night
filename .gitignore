@@ -5,7 +5,8 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
-
+/[Aa]ssets/Models3D/
+/[Aa]ssets/StarterAssets/ThirdPersonController/Character/Models/
 # MemoryCaptures can get excessive in size.
 # They also could contain potentially sensitive data
 /[Mm]emoryCaptures/
