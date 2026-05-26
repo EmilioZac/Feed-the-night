@@ -4,7 +4,7 @@ namespace StarterAssets
 {
     public class PlayerAnimationController : MonoBehaviour
     {
-        private Animator _animator;
+        [SerializeField] private Animator _animator;
         private bool _hasAnimator;
 
         // IDs
@@ -27,9 +27,43 @@ namespace StarterAssets
 
         private void Awake()
         {
-            _animator = GetComponentInChildren<Animator>();
+            if (_animator == null)
+            {
+                _animator = GetComponentInChildren<Animator>();
+            }
+
+            if (_animator == null)
+            {
+                Debug.LogError($"[Anim] No se encontró ningún Animator en '{gameObject.name}' ni en sus hijos. " +
+                               "Asegúrate de que el nuevo modelo (Kanki1WithSkeleton) sea hijo de PlayerNew y " +
+                               "arrastra su Animator al campo 'Animator' del componente PlayerAnimationController.", this);
+            }
+            else
+            {
+                bool isChild = _animator.transform.IsChildOf(transform);
+                if (!isChild)
+                {
+                    Debug.LogWarning($"[Anim] El Animator detectado pertenece a '{_animator.gameObject.name}', " +
+                                     "que NO es hijo de este GameObject. Las animaciones no se controlarán correctamente. " +
+                                     "Arrastra el modelo dentro de PlayerNew en la jerarquía.", _animator);
+                }
+                else
+                {
+                    Debug.Log($"[Anim] Animator conectado correctamente → '{_animator.gameObject.name}' " +
+                              $"(Avatar: {(_animator.avatar != null ? _animator.avatar.name : "NINGUNO")}, " +
+                              $"Humanoid: {_animator.isHuman}, " +
+                              $"Apply Root Motion: {_animator.applyRootMotion})", _animator);
+
+                    if (_animator.applyRootMotion)
+                    {
+                        Debug.LogWarning("[Anim] 'Apply Root Motion' está ACTIVADO en el Animator. " +
+                                         "Desactívalo para que el movimiento lo controle solo el CharacterController, " +
+                                         "si no el personaje se moverá de forma extraña.", _animator);
+                    }
+                }
+            }
+
             _hasAnimator = _animator != null;
-            
             AssignAnimationIDs();
         }
 
@@ -98,8 +132,7 @@ namespace StarterAssets
 
         public void SetAttack(bool attacking, int comboStep = 0)
         {
-            if (!_hasAnimator) { Debug.LogWarning("[Anim Debug] SetAttack called but no Animator found!"); return; }
-            Debug.Log($"[Anim Debug] SetAttack: {attacking}, Step: {comboStep}");
+            if (!_hasAnimator) return;
             if (attacking) _animator.SetInteger(_animIDComboStep, comboStep);
             _animator.SetBool(_animIDAttack, attacking);
         }

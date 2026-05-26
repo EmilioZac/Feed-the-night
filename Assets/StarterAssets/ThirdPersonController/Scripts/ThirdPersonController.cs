@@ -16,6 +16,7 @@ namespace StarterAssets
 #endif
     [RequireComponent(typeof(HealthSystem))]
     [RequireComponent(typeof(HungerSystem))]
+    [RequireComponent(typeof(StarterAssetsInputs))]
     public class ThirdPersonController : MonoBehaviour
     {
         [Header("Movement")]
@@ -81,6 +82,10 @@ namespace StarterAssets
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            if (_input == null)
+            {
+                Debug.LogError($"[ThirdPersonController] ¡Falta el componente StarterAssetsInputs en el objeto '{gameObject.name}'! Por favor, agrégalo en el Inspector.", this);
+            }
             _health = GetComponent<HealthSystem>();
             _hunger = GetComponent<HungerSystem>();
             EnergySystem = EnergySystem ?? GetComponent<EnergySystem>();
@@ -102,6 +107,7 @@ namespace StarterAssets
 
         private void Update()
         {
+            if (_input == null) return;
             if (_health != null && !_health.IsAlive) {
                 if (!_isDeadStateInitialized) {
                     _isDeadStateInitialized = true;
@@ -156,6 +162,7 @@ namespace StarterAssets
 
         private void LateUpdate()
         {
+            if (_input == null) return;
             CameraRotation();
         }
 
