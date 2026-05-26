@@ -15,7 +15,6 @@ namespace FeedTheNight.Controllers
         public float runSpeed = 8f;
         public float crouchSpeed = 2f;
         public float gravity = -9.81f;
-        public float jumpHeight = 1.0f;
 
         [Header("Combat Settings")]
         public float attackDamage = 0.5f;
@@ -46,7 +45,6 @@ namespace FeedTheNight.Controllers
         private InputAction _sprintAction;
         private InputAction _crouchAction;
         private InputAction _interactAction;
-        private InputAction _jumpAction;
 
         private Vector3 _velocity;
         private bool _isGrounded;
@@ -86,7 +84,6 @@ namespace FeedTheNight.Controllers
             _sprintAction = _playerInput.actions["Sprint"];
             _crouchAction = _playerInput.actions["Crouch"];
             _interactAction = _playerInput.actions["Interact"];
-            _jumpAction = _playerInput.actions["Jump"];
 
             if (_health != null) _health.OnDamaged += (amt) => _damageFlashTimer = 0.2f;
         }
@@ -293,16 +290,7 @@ namespace FeedTheNight.Controllers
             // 5. Apply Vertical Velocity (Gravity)
             _controller.Move(_velocity * Time.deltaTime);
 
-            // Optional: Jump
-            if (_jumpAction.WasPressedThisFrame() && _isGrounded && currentState != State.Feed && currentState != State.Camouflage)
-            {
-                bool canJump = energySystem == null || energySystem.Energy >= 10f; // Minimal cost check
-                if (canJump)
-                {
-                    _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                    if (energySystem != null) energySystem.OnJump();
-                }
-            }
+
 
             // Update Energy System with running state
             if (energySystem != null)

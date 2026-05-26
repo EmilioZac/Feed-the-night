@@ -25,9 +25,7 @@ namespace StarterAssets
         public float SpeedChangeRate = 10.0f;
 
         [Header("Physics")]
-        public float JumpHeight = 1.2f;
         public float Gravity = -15.0f;
-        public float JumpTimeout = 0.50f;
         public float FallTimeout = 0.15f;
         public bool Grounded = true;
         public float GroundedOffset = -0.14f;
@@ -46,7 +44,8 @@ namespace StarterAssets
 
         private float _cinemachineTargetYaw, _cinemachineTargetPitch;
         private float _speed, _animationBlend, _targetRotation = 0.0f, _rotationVelocity, _verticalVelocity;
-        private float _terminalVelocity = 53.0f, _jumpTimeoutDelta, _fallTimeoutDelta;
+        private float _terminalVelocity = 53.0f, _fallTimeoutDelta;
+        private PlayerJump _playerJump;
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -94,7 +93,7 @@ namespace StarterAssets
             _frenzy = GetComponent<PlayerFrenzyState>() ?? gameObject.AddComponent<PlayerFrenzyState>();
             _visuals = GetComponent<PlayerVisuals>() ?? gameObject.AddComponent<PlayerVisuals>();
             _blockResistance = _maxBlockResistance;
-            _jumpTimeoutDelta = JumpTimeout;
+            _playerJump = GetComponent<PlayerJump>() ?? gameObject.AddComponent<PlayerJump>();
             _fallTimeoutDelta = FallTimeout;
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
@@ -255,14 +254,16 @@ namespace StarterAssets
             if (_combat.IsDashing || _input.crouch || _input.camouflage) { _input.jump = false; return; }
             if (Grounded) {
                 _fallTimeoutDelta = FallTimeout; _anim.SetJump(false); _anim.SetFreeFall(false); if (_verticalVelocity < 0) _verticalVelocity = -2f;
-                if (_input.jump && _jumpTimeoutDelta <= 0 && (EnergySystem?.Energy >= EnergySystem?.jumpDrainFlat) && !_interaction.IsCamouflaged) {
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity); _anim.SetJump(true); EnergySystem?.OnJump();
-                } else _input.jump = false;
-                if (_jumpTimeoutDelta >= 0) _jumpTimeoutDelta -= Time.deltaTime;
             } else {
-                _jumpTimeoutDelta = JumpTimeout; if (_fallTimeoutDelta >= 0) _fallTimeoutDelta -= Time.deltaTime; else _anim.SetFreeFall(true);
+                if (_fallTimeoutDelta >= 0) _fallTimeoutDelta -= Time.deltaTime; else _anim.SetFreeFall(true);
+            }
+
+            if (_playerJump != null) {
+                _playerJump.UpdateJump(ref _verticalVelocity, Gravity, Grounded);
+            } else {
                 _input.jump = false;
             }
+
             if (_verticalVelocity < _terminalVelocity) _verticalVelocity += Gravity * Time.deltaTime;
         }
 
