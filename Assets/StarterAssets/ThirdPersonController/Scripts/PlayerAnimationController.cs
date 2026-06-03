@@ -133,7 +133,7 @@ namespace StarterAssets
         public void SetAttack(bool attacking, int comboStep = 0)
         {
             if (!_hasAnimator) return;
-            if (attacking) _animator.SetInteger(_animIDComboStep, comboStep);
+            _animator.SetInteger(_animIDComboStep, comboStep);
             _animator.SetBool(_animIDAttack, attacking);
         }
 

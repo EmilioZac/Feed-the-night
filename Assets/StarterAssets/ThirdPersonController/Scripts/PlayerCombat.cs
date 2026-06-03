@@ -87,7 +87,11 @@ namespace StarterAssets
 
             if (_input.dash)
             {
-                ExecuteDash();
+                ThirdPersonController tpc = GetComponent<ThirdPersonController>();
+                if (tpc == null || tpc.Grounded)
+                {
+                    ExecuteDash();
+                }
                 _input.dash = false;
             }
         }
@@ -228,6 +232,22 @@ namespace StarterAssets
 
             if (!isExhausted) return 0f;
             else return damage * 0.5f;
+        }
+
+        public void ResetCombatStates()
+        {
+            StopAllCoroutines();
+            IsAttacking = false;
+            CanAttack = true;
+            IsDashing = false;
+            CanDash = true;
+            _comboBuffered = false;
+            _currentComboStep = 0;
+            if (_anim != null)
+            {
+                _anim.SetAttack(false, 0);
+                _anim.SetDash(false);
+            }
         }
     }
 }

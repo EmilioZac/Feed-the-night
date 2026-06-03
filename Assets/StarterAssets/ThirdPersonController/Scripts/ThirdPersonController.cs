@@ -63,6 +63,7 @@ namespace StarterAssets
         private PlayerAnimationController _anim;
         private float _blockDuration, _blockResistance, _maxBlockResistance = 3.0f, _blockRecoveryTimer;
         private bool _isDeadStateInitialized = false, _wasCrouching = false;
+        public float ScreamDuration = 1.0f;
         private bool _isScreaming = false;
         private float _screamTimer = 0f;
         private bool _wasFrenzy = false;
@@ -145,7 +146,16 @@ namespace StarterAssets
             if (!_wasFrenzy) {
                 _wasFrenzy = true;
                 _isScreaming = true;
-                _screamTimer = 1.5f;
+                _screamTimer = ScreamDuration;
+                // Limpiar todos los inputs que puedan mantener animaciones bugeadas
+                _input.crouch = false;
+                _input.block = false;
+                _input.attack = false;
+                _input.dash = false;
+                // Limpiar todos los parámetros del Animator que puedan quedar activos
+                _anim?.SetCrouch(false);
+                _anim?.SetBlocking(false);
+                if (_combat != null) _combat.ResetCombatStates();
                 _anim?.SetScream(true);
                 _speed = _animationBlend = 0f;
                 _anim?.SetMoveSpeed(0f, 0f);
@@ -153,6 +163,8 @@ namespace StarterAssets
 
             if (_isScreaming) {
                 _screamTimer -= Time.deltaTime;
+                _speed = _animationBlend = 0f;
+                _anim?.SetMoveSpeed(0f, 0f);
                 if (_screamTimer <= 0f) {
                     _isScreaming = false;
                     _anim?.SetScream(false);
