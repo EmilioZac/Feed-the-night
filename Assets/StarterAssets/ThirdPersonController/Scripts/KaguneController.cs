@@ -13,6 +13,12 @@ namespace StarterAssets
         [Tooltip("Nombre del parámetro booleano en el Animator que indica si el Kagune está activo.")]
         public string activeBoolName = "Active";
 
+        [Tooltip("Nombre del Trigger para iniciar un ataque en el Animator.")]
+        public string attackTriggerName = "Attack";
+
+        [Tooltip("Nombre del Integer en el Animator que define el índice del combo actual (1 a 4).")]
+        public string comboIntName = "AttackCombo";
+
         private Animator _animator;
 
         private void Awake()
@@ -23,16 +29,23 @@ namespace StarterAssets
         /// <summary>
         /// Cambia el parámetro booleano en el Animator para activar o desactivar el Kagune.
         /// </summary>
-        /// <param name="active">True para iniciar Spawn/Idle, False para volver a NoIdle.</param>
         public void SetKaguneActiveState(bool active)
         {
             if (_animator != null)
             {
                 _animator.SetBool(activeBoolName, active);
             }
-            else
+        }
+
+        /// <summary>
+        /// Dispara la animación del combo correspondiente.
+        /// </summary>
+        public void PlayAttackAnimation(int comboStep)
+        {
+            if (_animator != null)
             {
-                Debug.LogWarning("[KaguneController] No se encontró el componente Animator en este GameObject.", this);
+                _animator.SetInteger(comboIntName, comboStep);
+                _animator.SetTrigger(attackTriggerName);
             }
         }
     }

@@ -138,6 +138,14 @@ namespace StarterAssets
                 _isScreaming = false; _screamTimer = 0f; _wasFrenzy = false;
             }
 
+            // Bloquear Crouch y Camouflage si el Kagune está activo
+            KaguneSpawner spawner = GetComponent<KaguneSpawner>();
+            if (spawner != null && spawner.IsKaguneActive)
+            {
+                _input.crouch = false;
+                _input.camouflage = false;
+            }
+
             JumpAndGravity(); GroundedCheck(); Move(); HandleAdditionalActions();
         }
 

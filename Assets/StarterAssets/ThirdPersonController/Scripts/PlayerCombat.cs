@@ -50,6 +50,21 @@ namespace StarterAssets
 
         public void HandleCombatActions()
         {
+            // Bloquear si el Kagune está activo (pero procesar ataques y dashes específicos del Kagune si los hay)
+            KaguneSpawner spawner = GetComponent<KaguneSpawner>();
+            if (spawner != null && spawner.IsKaguneActive)
+            {
+                _input.dash = false; // El Kagune sigue sin permitir Dash tradicional
+
+                if (_input.attack)
+                {
+                    // Ejecutamos el ataque del Kagune
+                    spawner.ExecuteKaguneAttack();
+                    _input.attack = false;
+                }
+                return;
+            }
+
             if (IsDashing || _input.crouch || _input.camouflage)
             {
                 _input.attack = false;

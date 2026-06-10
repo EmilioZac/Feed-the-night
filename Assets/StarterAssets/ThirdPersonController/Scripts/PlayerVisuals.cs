@@ -14,7 +14,22 @@ namespace StarterAssets
 
         private void Awake()
         {
-            _renderers = GetComponentsInChildren<Renderer>();
+            // Buscamos todos los renderers en los hijos
+            var allRenderers = GetComponentsInChildren<Renderer>();
+            
+            // Filtramos para ignorar aquellos que pertenezcan al Kagune
+            var rendererList = new System.Collections.Generic.List<Renderer>();
+            foreach (var r in allRenderers)
+            {
+                if (r.GetComponentInParent<KaguneController>() != null)
+                {
+                    // Es parte del Kagune, lo ignoramos
+                    continue;
+                }
+                rendererList.Add(r);
+            }
+            _renderers = rendererList.ToArray();
+            
             _propBlock = new MaterialPropertyBlock();
             
             // Intentar capturar el color original del primer renderer con color
