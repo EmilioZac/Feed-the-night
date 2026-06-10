@@ -5014,19 +5014,19 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 490576247926091845}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.32
+      value: 0.004
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.3755
+      value: 1.124
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.046
+      value: -0.173
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5034,15 +5034,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5466,7 +5466,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_Name
-      value: Kagune4WithSkeleton1
+      value: Kagune
       objectReference: {fileID: 0}
     - target: {fileID: 1574434997042826641, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5931,6 +5931,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2102947153}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2102947155}
   m_SourcePrefab: {fileID: 100100000, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
 --- !u!1 &2102947152 stripped
 GameObject:
@@ -5959,6 +5962,24 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!4 &2102947154 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 851975ec61eb4fd44b8c406f52f33834, type: 3}
+  m_PrefabInstance: {fileID: 2102947151}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2102947155
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2102947152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36cb249a07cae0c4d810a0dbce603657, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.KaguneController
+  spawnTriggerName: Spawn
 --- !u!1 &2141960206
 GameObject:
   m_ObjectHideFlags: 0
@@ -6457,13 +6478,14 @@ Transform:
   m_GameObject: {fileID: 974238577364871935}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.92999995, z: 0}
+  m_LocalPosition: {x: 0, y: -0.526, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4860276693352666019}
   - {fileID: 6900890503338554519}
   - {fileID: 3675218591775313628}
+  - {fileID: 2102947154}
   m_Father: {fileID: 2119775930208016943}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &497831375497165350
@@ -7179,6 +7201,7 @@ GameObject:
   - component: {fileID: 768106963}
   - component: {fileID: 768106962}
   - component: {fileID: 768106961}
+  - component: {fileID: 8008698535038044060}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -9430,7 +9453,7 @@ Transform:
   m_GameObject: {fileID: 3203261900725188904}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.20000005, y: 0.44500005, z: -4}
+  m_LocalPosition: {x: 0.20000005, y: 0.849, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -12065,7 +12088,7 @@ Transform:
   m_GameObject: {fileID: 5542111180013851645}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.20000005, y: 0.44500005, z: -4}
+  m_LocalPosition: {x: 0.20000005, y: 0.849, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12717,7 +12740,11 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'mixamorig:LeftHandIndex1'\n\tTransform 'mixamorig:LeftHandIndex1'\n\tTransform
+    'mixamorig:RightHand'\n\tTransform 'mixamorig:RightForeArm'\n\tTransform 'mixamorig:RightHand'\n\tTransform
+    'mixamorig:RightForeArm'\n\tFrom animation clip 'CrossingArms'"
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -15332,6 +15359,20 @@ MonoBehaviour:
   diminishingStep: 0.1
   lowHungerThreshold: 20
   _hunger: 0
+--- !u!114 &8008698535038044060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 974238577364871935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10ceb6345e4490842967b1ffe77304de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.KaguneSpawner
+  kaguneObject: {fileID: 2102947152}
+  toggleMode: 1
 --- !u!1 &8022515958763048271
 GameObject:
   m_ObjectHideFlags: 0
@@ -16813,4 +16854,3 @@ SceneRoots:
   - {fileID: 2119775929925518614}
   - {fileID: 1136244432}
   - {fileID: 2119775930208016943}
-  - {fileID: 2102947151}
