@@ -12,6 +12,7 @@ namespace StarterAssets
         private ThirdPersonController _mainController;
         private PlayerInteraction _interaction;
         private PlayerAnimationController _anim;
+        private KaguneSpawner _kaguneSpawner;
 
         private float _frenzyAttackTimer;
 
@@ -24,6 +25,7 @@ namespace StarterAssets
             _mainController = GetComponent<ThirdPersonController>();
             _interaction = GetComponent<PlayerInteraction>();
             _anim = GetComponentInChildren<PlayerAnimationController>();
+            _kaguneSpawner = GetComponent<KaguneSpawner>();
             Debug.Log($"[Frenzy Debug] PlayerFrenzyState Awake. Anim: {_anim != null}, Interaction: {_interaction != null}");
         }
 
@@ -46,10 +48,13 @@ namespace StarterAssets
             GameObject nearestNPC = FindNearestNPC();
             Vector3 move = Vector3.zero;
 
+            bool isKaguneActive = _kaguneSpawner != null && _kaguneSpawner.IsKaguneActive;
+            bool isCurrentlyAttacking = isKaguneActive ? _kaguneSpawner.IsAttacking : _combat.IsAttacking;
+
             if (nearestNPC != null)
             {
                 float dist = Vector3.Distance(nearestNPC.transform.position, transform.position);
-                Debug.Log($"[Frenzy Debug] Nearest: {nearestNPC.name}, Dist: {dist:F2}, Attacking: {_combat.IsAttacking}, Grounded: {_mainController.Grounded}");
+                Debug.Log($"[Frenzy Debug] Nearest: {nearestNPC.name}, Dist: {dist:F2}, Attacking: {isCurrentlyAttacking}, Grounded: {_mainController.Grounded}, KaguneActive: {isKaguneActive}");
                 
                 Vector3 direction = (nearestNPC.transform.position - transform.position);
                 direction.y = 0;
@@ -62,8 +67,8 @@ namespace StarterAssets
             if (_anim != null)
             {
                 // Si estamos atacando, forzamos velocidad 0 para que no intente mezclar Correr con Ataque
-                float targetSpeed = (move.magnitude > 0.1f && !_combat.IsAttacking) ? frenzySpeed : 0f;
-                if (move.magnitude > 0.1f && !_combat.IsAttacking) Debug.Log($"[Frenzy Debug] Running Animation. Speed: {targetSpeed}");
+                float targetSpeed = (move.magnitude > 0.1f && !isCurrentlyAttacking) ? frenzySpeed : 0f;
+                if (move.magnitude > 0.1f && !isCurrentlyAttacking) Debug.Log($"[Frenzy Debug] Running Animation. Speed: {targetSpeed}");
                 _anim.SetMoveSpeed(targetSpeed, move.magnitude);
             }
 
@@ -79,9 +84,20 @@ namespace StarterAssets
                 _frenzyAttackTimer = 0f;
                 // SOLO atacar si estamos en rango (aumentado a 2.5m porque los colliders a veces impiden acercarse más)
                 float distToTarget = nearestNPC != null ? Vector3.Distance(nearestNPC.transform.position, transform.position) : float.MaxValue;
-                if (_combat.CanAttack && distToTarget <= 2.5f)
+                
+                if (isKaguneActive)
                 {
-                    _combat.ExecuteFrenzyAttack(1);
+                    if (_kaguneSpawner.CanAttack && distToTarget <= 2.5f)
+                    {
+                        _kaguneSpawner.ExecuteKaguneAttack();
+                    }
+                }
+                else
+                {
+                    if (_combat.CanAttack && distToTarget <= 2.5f)
+                    {
+                        _combat.ExecuteFrenzyAttack(1);
+                    }
                 }
             }
         }

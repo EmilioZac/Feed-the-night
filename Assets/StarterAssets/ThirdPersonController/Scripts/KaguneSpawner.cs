@@ -20,6 +20,8 @@ namespace StarterAssets
 
         private bool _kaguneActive = false;
         private KaguneController _kaguneController;
+        private PlayerCombat _playerCombat;
+        private HealthSystem _healthSystem;
 
         /// <summary>
         /// Indica si el Kagune está actualmente activado.
@@ -28,6 +30,14 @@ namespace StarterAssets
 
         private void Start()
         {
+            _playerCombat = GetComponent<PlayerCombat>();
+            _healthSystem = GetComponent<HealthSystem>();
+
+            if (_healthSystem != null)
+            {
+                _healthSystem.OnDeath += HandleDeath;
+            }
+
             if (kaguneObject != null)
             {
                 // Obtenemos o añadimos el controlador en el Kagune
@@ -49,10 +59,33 @@ namespace StarterAssets
             }
         }
 
+        private void OnDestroy()
+        {
+            if (_healthSystem != null)
+            {
+                _healthSystem.OnDeath -= HandleDeath;
+            }
+        }
+
+        private void HandleDeath()
+        {
+            SetKaguneActive(false);
+        }
+
         private void Update()
         {
             if (kaguneObject == null) return;
             if (Keyboard.current == null) return;
+
+            // Si el jugador está muerto, desactivamos el Kagune y no permitimos activarlo
+            if (_healthSystem != null && !_healthSystem.IsAlive)
+            {
+                if (_kaguneActive)
+                {
+                    SetKaguneActive(false);
+                }
+                return;
+            }
 
             if (toggleMode)
             {
@@ -104,6 +137,9 @@ namespace StarterAssets
         private float _lastClickTime = -999f;
         private bool _isAttacking = false;
 
+        public bool IsAttacking => _isAttacking;
+        public bool CanAttack => !_isAttacking && Time.time >= (_lastClickTime + attackCooldown);
+
         public void ExecuteKaguneAttack()
         {
             if (_isAttacking) return;
@@ -139,15 +175,29 @@ namespace StarterAssets
             yield return new WaitForSeconds(attackDuration * 0.4f);
 
             // Detección de daño (usamos OverlapSphere en el frente del jugador)
-            if (hitLayers.value == 0) hitLayers = LayerMask.GetMask("npc", "NPC", "Enemy", "Default");
+            if (hitLayers.value == 0)
+            {
+                if (_playerCombat != null)
+                {
+                    hitLayers = _playerCombat.HitLayers;
+                }
+                else
+                {
+                    hitLayers = LayerMask.GetMask("npc", "NPC", "Enemy", "Default");
+                }
+            }
             
             Collider[] hits = Physics.OverlapSphere(transform.position + transform.forward * 1.2f, attackRange, hitLayers);
+            Debug.Log($"[Kagune Combat] Attack Sphere casted. Range: {attackRange}, Hits found: {hits.Length}, Mask: {hitLayers.value}");
+
             foreach (var hit in hits)
             {
+                Debug.Log($"[Kagune Combat] Hit detected on: {hit.name} (Layer: {LayerMask.LayerToName(hit.gameObject.layer)})");
                 if (hit.transform.root == transform.root) continue;
 
-                float finalDamage = attackDamage;
-                if (comboStep == 4) finalDamage *= 1.8f; // El último golpe hace más daño
+                float baseDamage = (_playerCombat != null) ? _playerCombat.AttackDamage : attackDamage;
+                float finalDamage = baseDamage * 2f;
+                if (comboStep == 4) finalDamage *= 2f; // El último golpe hace el doble de daño (multiplicado por 2 igual que el combo 4 normal)
 
                 var npcCivil = hit.GetComponentInParent<FeedTheNight.NPCs.NPCCivil>();
                 if (npcCivil != null)
