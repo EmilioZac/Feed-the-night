@@ -1,7 +1,14 @@
 fileFormatVersion: 2
 guid: aa1020ec2c37d4440b5033fccc0f4dfc
+AssetOrigin:
+  serializedVersion: 1
+  productId: 326131
+  packageName: npc_casual_set_00
+  packageVersion: 1.0.3
+  assetPath: Assets/npc_casual_set_00/Mesh/npc_csl_shoe_04.fbx
+  uploadId: 807672
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects:
   - first:
@@ -9,6 +16,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: lambert1
     second: {fileID: 2100000, guid: c889fdc9dc216c5469e064fa9db776c5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mtl_01
+    second: {fileID: 2100000, guid: 3d3e585e339efb3498e1d3f8c654367a, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -21,8 +33,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -63,6 +73,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -749,8 +762,7 @@ ModelImporter:
     - name: RightHandProp
       parentName: RightHand
       position: {x: 0.07249664, y: 0.02021976, z: -0.0038000562}
-      rotation: {x: 0.00000005960463, y: 0.000000048428763, z: -0.0000000032596283,
-        w: 1}
+      rotation: {x: 0.00000005960463, y: 0.000000048428763, z: -0.0000000032596283, w: 1}
       scale: {x: 0.99999994, y: 1.000001, z: 1.0000004}
     - name: RightHandRing1
       parentName: RightHand
@@ -834,8 +846,7 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 4350b309aa35d8241b5a918441629bdc,
-    type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 4350b309aa35d8241b5a918441629bdc, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
@@ -847,10 +858,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 326131
-  packageName: npc_casual_set_00
-  packageVersion: 1.0.3
-  assetPath: Assets/npc_casual_set_00/Mesh/npc_csl_shoe_04.fbx
-  uploadId: 807672
