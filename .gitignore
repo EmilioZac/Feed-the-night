@@ -7,12 +7,14 @@
 /[Uu]ser[Ss]ettings/
 /[Aa]ssets/Models3D/
 /[Aa]ssets/StarterAssets/ThirdPersonController/Character/Models/
+/[Aa]ssets/Versatile Studio Assets/Demo City By Versatile Studio/Scenes/
 # MemoryCaptures can get excessive in size.
 # They also could contain potentially sensitive data
 /[Mm]emoryCaptures/
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
+/[Aa]ssets/Versatile Studio Assets/Demo City By Versatile Studio/Scenes.meta
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
