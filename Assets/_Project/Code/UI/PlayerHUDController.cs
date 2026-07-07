@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using FeedTheNight.Systems;
+using TMPro;
 
 namespace FeedTheNight.UI
 {
@@ -15,14 +16,14 @@ namespace FeedTheNight.UI
     {
         // ── References assigned by PlayerHUDBuilder ───────────────────────────
         [Header("Bar Images  (auto-asignadas por el Builder)")]
-        [SerializeField] internal Image healthFill;
-        [SerializeField] internal Image hungerFill;
-        [SerializeField] internal Image energyFill;
+        [SerializeField] public Image healthFill;
+        [SerializeField] public Image hungerFill;
+        [SerializeField] public Image energyFill;
 
         [Header("Percent Texts  (auto-asignadas por el Builder)")]
-        [SerializeField] internal Text  healthText;
-        [SerializeField] internal Text  hungerText;
-        [SerializeField] internal Text  energyText;
+        [SerializeField] public TextMeshProUGUI  healthText;
+        [SerializeField] public TextMeshProUGUI  hungerText;
+        [SerializeField] public TextMeshProUGUI  energyText;
 
         // ── Player systems  (arrastrar desde el Player en el Inspector) ────────
         [Header("Systems  ← arrastrar desde el Player")]
@@ -154,7 +155,7 @@ namespace FeedTheNight.UI
         }
 
         // ── Helper ────────────────────────────────────────────────────────────
-        private static void SetText(Text t, float ratio)
+        private static void SetText(TextMeshProUGUI t, float ratio)
         {
             if (t != null) t.text = Mathf.RoundToInt(ratio * 100f) + "%";
         }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
+using TMPro;
 
 namespace FeedTheNight.Editor
 {
@@ -70,7 +71,7 @@ namespace FeedTheNight.Editor
 
             // ── Barras (índice 0 = inferior) ──────────────────────────────────
             Image healthFill, hungerFill, energyFill;
-            Text  healthPct,  hungerPct,  energyPct;
+            TextMeshProUGUI  healthPct,  hungerPct,  energyPct;
 
             CreateBar(barsRT, "HealthBar",  "VIDA",    HealthFill, 2,
                 out healthFill, out healthPct);
@@ -119,7 +120,7 @@ namespace FeedTheNight.Editor
 
         static void CreateBar(RectTransform parent, string name, string label,
             Color fillColor, int slotIndex,
-            out Image fillImage, out Text percentText)
+            out Image fillImage, out TextMeshProUGUI percentText)
         {
             float yPos = MARGIN_Y * 0.5f + slotIndex * SPACING;
 
@@ -169,13 +170,12 @@ namespace FeedTheNight.Editor
             lblRT.anchorMax = Vector2.one;
             lblRT.offsetMin = new Vector2(6f, 0f);
             lblRT.offsetMax = Vector2.zero;
-            var lblTxt     = lblGO.AddComponent<Text>();
+            var lblTxt     = lblGO.AddComponent<TextMeshProUGUI>();
             lblTxt.text    = label;
             lblTxt.fontSize = 11;
-            lblTxt.fontStyle = FontStyle.Bold;
+            lblTxt.fontStyle = FontStyles.Bold;
             lblTxt.color   = new Color(1f, 1f, 1f, 0.85f);
-            lblTxt.alignment = TextAnchor.MiddleLeft;
-            lblTxt.font    = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            lblTxt.alignment = TextAlignmentOptions.Left;
 
             // ── Porcentaje (derecha) ───────────────────────────────────────────
             var pctGO      = new GameObject("PercentText");
@@ -185,13 +185,12 @@ namespace FeedTheNight.Editor
             pctRT.anchorMax = Vector2.one;
             pctRT.offsetMin = Vector2.zero;
             pctRT.offsetMax = new Vector2(-6f, 0f);
-            percentText    = pctGO.AddComponent<Text>();
+            percentText    = pctGO.AddComponent<TextMeshProUGUI>();
             percentText.text = "100%";
             percentText.fontSize  = 11;
-            percentText.fontStyle = FontStyle.Bold;
+            percentText.fontStyle = FontStyles.Bold;
             percentText.color     = Color.white;
-            percentText.alignment = TextAnchor.MiddleRight;
-            percentText.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            percentText.alignment = TextAlignmentOptions.Right;
         }
     }
 }

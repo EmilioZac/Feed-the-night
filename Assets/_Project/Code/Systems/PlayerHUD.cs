@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace FeedTheNight.UI
 {
@@ -148,12 +149,11 @@ namespace FeedTheNight.UI
             labelRT.anchorMax = new Vector2(1f, 1f);
             labelRT.offsetMin = new Vector2(6f, 0f);
             labelRT.offsetMax = Vector2.zero;
-            var text         = labelGO.AddComponent<Text>();
+            var text         = labelGO.AddComponent<TextMeshProUGUI>();
             text.text        = label.ToUpper();
             text.fontSize    = 10;
             text.color       = new Color(1f, 1f, 1f, 0.75f);
-            text.alignment   = TextAnchor.MiddleLeft;
-            text.font        = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.alignment   = TextAlignmentOptions.Left;
 
             barRect = containerRT;
             return fill;
