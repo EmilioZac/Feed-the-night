@@ -1,5 +1,5 @@
 using UnityEngine;
-using FeedTheNight.Controllers;
+using StarterAssets;
 
 namespace FeedTheNight.NPCs
 {
@@ -44,7 +44,7 @@ namespace FeedTheNight.NPCs
         public System.Action OnPlayerLost;
 
         private Transform _playerTransform;
-        private PlayerController _playerController;
+        private StarterAssetsInputs _playerInputs;
         private SphereCollider _triggerCollider;
 
         private float _checkTimer;
@@ -74,11 +74,25 @@ namespace FeedTheNight.NPCs
             _checkTimer += Time.deltaTime;
 
             // Determinar si el jugador está camuflado
-            bool playerIsCamouflaged = _playerController != null && _playerController.currentState == PlayerController.State.Camouflage;
+            bool playerIsCamouflaged = _playerInputs != null && _playerInputs.camouflage;
 
             if (_checkTimer >= checkInterval)
             {
                 _checkTimer = 0f;
+                
+                // Mostrar en consola si se encontró al StarterAssetsInputs y en qué estado está
+                if (_playerInTrigger)
+                {
+                    if (_playerInputs != null)
+                    {
+                        Debug.Log($"[VisionCone - {gameObject.name}] [Debug] Jugador en rango. StarterAssetsInputs detectado. Agachado: {_playerInputs.crouch} | ¿Camuflado?: {playerIsCamouflaged}");
+                    }
+                    else
+                    {
+                        Debug.Log($"[VisionCone - {gameObject.name}] [Debug-Warning] Jugador en rango pero ¡StarterAssetsInputs es NULL! Revisa si el componente está en el objeto del jugador o sus padres.");
+                    }
+                }
+
                 // Si el jugador está camuflado, no podemos verlo bajo ninguna circunstancia
                 if (_playerInTrigger && _playerTransform != null && !playerIsCamouflaged)
                 {
@@ -137,9 +151,9 @@ namespace FeedTheNight.NPCs
                 _cooldownDelayTimer = 0f;
 
                 float camoMultiplier = 1.0f;
-                if (_playerController != null)
+                if (_playerInputs != null)
                 {
-                    if (_playerController.currentState == PlayerController.State.Crouch)
+                    if (_playerInputs.crouch)
                     {
                         camoMultiplier = 0.5f; // Mitad de velocidad si está agachado
                     }
@@ -231,15 +245,15 @@ namespace FeedTheNight.NPCs
             {
                 _playerTransform = other.transform;
                 
-                // Intento robusto de encontrar PlayerController en el objeto, hijos o padres
-                _playerController = other.GetComponentInParent<PlayerController>();
-                if (_playerController == null)
+                // Intento robusto de encontrar StarterAssetsInputs en el objeto, hijos o padres
+                _playerInputs = other.GetComponentInParent<StarterAssetsInputs>();
+                if (_playerInputs == null)
                 {
-                    _playerController = other.GetComponentInChildren<PlayerController>();
+                    _playerInputs = other.GetComponentInChildren<StarterAssetsInputs>();
                 }
-                if (_playerController == null)
+                if (_playerInputs == null)
                 {
-                    _playerController = FindObjectOfType<PlayerController>();
+                    _playerInputs = FindObjectOfType<StarterAssetsInputs>();
                 }
                 
                 _playerInTrigger = true;
