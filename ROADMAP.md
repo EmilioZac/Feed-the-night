@@ -63,6 +63,10 @@
 **Objetivo:** Construir una "Caja Gris" (Greybox) fea pero divertida. Si no es divertido cazar cubos, no será divertido cazar modelos 3D.
 **Duración Estimada:** 5 Semanas
 
+### 2.0 Creación Básica del Personaje
+*   [x] **Creación Básica del Personaje**: El personaje base está configurado con todos sus ataques y animaciones básicas.
+    *   *Nota*: En la fase 3.1 queda pendiente pulir la animación de comer (Feed) y la de arma, añadir más sistemas de ataque y esquive, y arreglar la animación de camuflaje.
+
 ### 2.1 Subfase: Gameplay "El Cazador"
 *Implementar las mecánicas del jugador.*
 
@@ -73,9 +77,8 @@
     *   [x] Conexión UI: Barras de Vida, Hambre y Energía con porcentajes.
     *   [x] Estado `Frenzy`: Si hambre < 20%, forzar movimiento hacia el NPC más cercano y ataques automáticos.
 *   **Mecánica de Alimentación**
-    *   [ ] Trigger de detección: `CanFeed?` (bool) cuando está detrás de un NPC y en rango.
-    *   [ ] Acción de Comer: Mantener botón 'E' durante 3 segundos.
-    *   [ ] Feedback: Partículas temporales (sangre/energía) y recuperación de la variable `Hunger`.
+    *   [x] Trigger de detección: `CanFeed?` (bool) cuando está detrás de un NPC y en rango.
+    *   [x] Acción de Comer y Recuperación: Mantener botón 'E' durante 3 segundos y recuperar la variable `Hunger`.
 
 ### 2.2 Subfase: Gameplay "La Presa" (IA)
 *Crear el desafío.*
@@ -95,8 +98,8 @@
 ### 2.3 Subfase: Integración del Loop
 *Cerrar el círculo jugable.*
 
-*   **Nivel de Prueba (Gym)**
-    *   [ ] Construir nivel con ProBuilder: Un callejón en forma de T, un patio abierto, cajas para cobertura alta y baja.
+*   **Nivel de Prueba (Ciudad con callejones y edificios)**
+    *   [ ] Construir nivel con ProBuilder: Una ciudad con callejones debido al gran volumen de edificios, un patio abierto y coberturas.
     *   [ ] Colocar 3 Civiles y 1 Policía patrullando.
 *   **Game Cycle**
     *   [ ] Condición de Victoria: Llenar la barra de hambre al 100% y llegar a la "Zona Segura".
@@ -106,7 +109,7 @@
 *Validar el "Look & Feel" Neo-noir. Movida desde Fase 1.3.*
 
 *   **Atmósfera Visual**
-    *   [x] **Shader de Lluvia**: Shader URP (`RainSurface.shader`) con ripples animados, wet-look y VFX de partículas (`RainVFX.cs`).
+    *   [ ] **Shader de Lluvia**: Shader URP (`RainSurface.shader`) con ripples animados, wet-look y VFX de partículas (`RainVFX.cs`).
     *   [ ] **Iluminación Volumétrica**: Configurar niebla global y luces de área para simular la contaminación lumínica de neones.
     *   [ ] **Post-Processing Inicial**: Crear perfil con Color Grading (tonos fríos/azules), Bloom (neones) y Vignette (claustrofobia).
     *   [ ] **Guía de Estilo Técnica (Performance & Look)**:
@@ -166,36 +169,42 @@
 
 *   **Activos 3D**
     *   [ ] Modelar/Adquirir Kit Modular Urbano: Pared ladrillo, Ventana iluminada, Farola, Contenedor de basura, Tuberías (para trepar).
-    *   [ ] Modelar Personajes: 1 Ghoul (Jugador), 1 Modelo Civil (con variantes de color), 1 Modelo Policía.
+    *   [x] Modelar Personajes: 1 Ghoul (Jugador - Creado con animaciones básicas), [ ] 1 Modelo Civil (con variantes de color), [ ] 1 Modelo Policía.
 *   **Level Dressing**
     *   [ ] Vestir el nivel Greybox: Añadir detalles, cables colgando, charcos específicos, basura dinámica.
     *   [ ] Iluminación Final: "Bake" de luces estáticas + Luces dinámicas para patrullas (linternas).
 *   **Pipeline de Personajes (Tech Art)**
-    *   [ ] **Modelado para Animación**:
+    *   [x] **Modelado para Animación**:
         *   Modelar en A-Pose (mejor deformación de hombros que T-Pose).
         *   Separar malla de cabeza y manos si se planea desmembramiento o personalización futura.
-    *   [ ] **Avatar Masks en Unity**:
+    *   [x] **Avatar Masks en Unity**:
         *   Configurar máscaras para "Upper Body" y "Lower Body".
         *   *Objetivo*: Permitir que el Ghoul ejecute la animación de ataque (Kagune) con el torso mientras las piernas siguen corriendo o caminando.
-    *   [ ] **Animaciones por Implementar (Checklist)**:
-        *   [ ] Idle (Base)
-        *   [ ] Walk (Frente, Lados, Atrás)
-        *   [ ] Run
+    *   [ ] **Animaciones por Implementar & Pulido (Checklist)**:
+        *   [x] Idle (Base)
+        *   [x] Walk (Frente, Lados, Atrás)
+        *   [x] Run
         *   [ ] Crouch Idle & Walk
-        *   [ ] Attack (Combo 3 golpes)
-        *   [ ] Block (Loop)
-        *   [ ] Dash (Roll o Slide)
-        *   [ ] Feed (Comer)
-*   **Optimización de Assets**
+        *   [x] Attack (Combo 3 golpes)
+        *   [ ] Pulir animación de Comer (Feed)
+        *   [ ] Pulir animación de Arma
+        *   [ ] Arreglar animación de Camuflaje
+        *   [ ] Añadir más sistemas de ataque y esquive (Block/Dash)
+*   **Optimización de Assets & Físicas**
     *   [ ] **LODs (Level of Detail)**:
         *   LOD0 (Close): 10k tris.
         *   LOD1 (10m): 5k tris.
         *   LOD2 (Far): Billboard o Low Poly (<500 tris).
-    *   [ ] **Colisionadores**: Usar primitivas (Box/Capsule) para el 90% del entorno. Mesh Colliders solo para geometría compleja navegable.
+    *   [x] **Colisionadores**: Configuración del mapa inicial con Box Colliders (En progreso - sin acabar porque faltan Box Colliders en los edificios, se pondrán al final).
+*   **Acabar el Mapa**
+    *   [ ] Finalizar el mapa básico (iniciado en la fase 2.0): detallar diseño y geometría.
+    *   [ ] Añadir los Box Colliders faltantes en los edificios (se posterga para el final).
 
 ### 3.2 Subfase: Sistemas Avanzados (Polishing)
 *Profundidad y sensaciones.*
 
+*   **Partículas y VFX (Feedback)**
+    *   [ ] Implementar partículas temporales de alimentación (sangre/energía) y recuperación (Movido de la fase 2.1).
 *   **Audio Inmersivo (Wwise/FMOD o Unity Audio)**
     *   [ ] **Audio Manager**: Sistema para priorizar sonidos.
     *   [ ] **SFX**: Pasos (diferentes según superficie: agua vs concreto), Latido de corazón (aumenta velocidad con bajo Hambre o detección).
