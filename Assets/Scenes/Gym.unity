@@ -88026,8 +88026,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b85f8ab699b5abc458afd0fb4882baa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.VisionCone
-  viewAngle: 90
-  viewDistance: 10
+  viewAngle: 120
+  viewDistance: 50
   targetMask:
     serializedVersion: 2
     m_Bits: 64
@@ -88035,8 +88035,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   checkInterval: 0.1
-  detectionSpeedMax: 100
-  detectionSpeedMin: 10
+  detectionSpeedMax: 10
+  detectionSpeedMin: 1
   cooldownSpeed: 50
   detectionCooldownDelay: 15
   detectionDistanceCurve:
@@ -88085,7 +88085,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 10
+  m_Radius: 60
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1403781420 stripped
 GameObject:

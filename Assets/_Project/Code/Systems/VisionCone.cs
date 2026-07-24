@@ -20,9 +20,9 @@ namespace FeedTheNight.NPCs
 
         [Header("Detection Settings")]
         [Tooltip("Velocidad de detección (sospecha/segundo) cuando el jugador está pegado al NPC.")]
-        public float detectionSpeedMax = 100f;
+        public float detectionSpeedMax = 20f;
         [Tooltip("Velocidad de detección (sospecha/segundo) cuando el jugador está al límite del rango.")]
-        public float detectionSpeedMin = 10f;
+        public float detectionSpeedMin = 2f;
         [Tooltip("Velocidad de enfriamiento base (sospecha/segundo) cuando no se ve al jugador.")]
         public float cooldownSpeed = 50f;
         [Tooltip("Tiempo de espera en segundos antes de enfriar la sospecha tras haber detectado al jugador al 100%.")]
@@ -45,6 +45,7 @@ namespace FeedTheNight.NPCs
 
         private Transform _playerTransform;
         private StarterAssetsInputs _playerInputs;
+        private KaguneSpawner _playerKagune;
         private SphereCollider _triggerCollider;
 
         private float _checkTimer;
@@ -125,10 +126,13 @@ namespace FeedTheNight.NPCs
                         obstacleInfo = "Fuera del ángulo visual";
                     }
 
+                    bool isKaguneActive = _playerKagune != null && _playerKagune.IsKaguneActive;
+
                     Debug.Log($"[VisionCone - {gameObject.name}] " +
                               $"Sospecha: {_suspicionMeter:F1}% | " +
                               $"Distancia: {distance:F2}m | " +
                               $"Obstáculo: {obstacleInfo} | " +
+                              $"¿Kagune?: {(isKaguneActive ? "SÍ" : "NO")} | " +
                               $"¿Detectado?: {(_isPlayerDetected ? "SÍ" : "NO")} | " +
                               $"Espera CD: {_cooldownDelayTimer:F1}s");
                 }
@@ -159,12 +163,18 @@ namespace FeedTheNight.NPCs
                     }
                 }
 
+                float kaguneMultiplier = 1.0f;
+                if (_playerKagune != null && _playerKagune.IsKaguneActive)
+                {
+                    kaguneMultiplier = 2.0f; // Doble de rápido si está en modo Kagune
+                }
+
                 float distance = Vector3.Distance(transform.position, _playerTransform.position + Vector3.up * 1.0f);
                 float normalizedDistance = Mathf.Clamp01(distance / viewDistance);
                 
                 // Evaluar la velocidad en la curva
                 float curveFactor = detectionDistanceCurve.Evaluate(normalizedDistance);
-                float detectionRate = Mathf.Lerp(detectionSpeedMin, detectionSpeedMax, curveFactor) * camoMultiplier;
+                float detectionRate = Mathf.Lerp(detectionSpeedMin, detectionSpeedMax, curveFactor) * camoMultiplier * kaguneMultiplier;
 
                 _suspicionMeter = Mathf.Min(100f, _suspicionMeter + detectionRate * Time.deltaTime);
             }
@@ -254,6 +264,17 @@ namespace FeedTheNight.NPCs
                 if (_playerInputs == null)
                 {
                     _playerInputs = FindObjectOfType<StarterAssetsInputs>();
+                }
+
+                // Intento de encontrar KaguneSpawner
+                _playerKagune = other.GetComponentInParent<KaguneSpawner>();
+                if (_playerKagune == null)
+                {
+                    _playerKagune = other.GetComponentInChildren<KaguneSpawner>();
+                }
+                if (_playerKagune == null)
+                {
+                    _playerKagune = FindObjectOfType<KaguneSpawner>();
                 }
                 
                 _playerInTrigger = true;
