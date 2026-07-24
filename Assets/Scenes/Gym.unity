@@ -87992,6 +87992,7 @@ GameObject:
   - component: {fileID: 1402758238}
   - component: {fileID: 1402758240}
   - component: {fileID: 1402758239}
+  - component: {fileID: 1402758241}
   m_Layer: 0
   m_Name: Npc_Controller
   m_TagString: Untagged
@@ -88035,7 +88036,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   checkInterval: 0.1
-  detectionSpeedMax: 10
+  detectionSpeedMax: 40
   detectionSpeedMin: 1
   cooldownSpeed: 50
   detectionCooldownDelay: 15
@@ -88085,8 +88086,25 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 60
+  m_Radius: 50
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1402758241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402758237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3456023a35bba04b9b28a4ab8c2e158, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.AudioDetection
+  audioDetectionSpeed: 25
+  audioCooldownSpeed: 15
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!1 &1403781420 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4753481557592362368, guid: b7d99e050a268a74393c5e2746a07604, type: 3}

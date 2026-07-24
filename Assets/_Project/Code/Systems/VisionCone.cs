@@ -35,7 +35,11 @@ namespace FeedTheNight.NPCs
         [SerializeField] private bool _isPlayerDetected = false;
         [SerializeField] private float _cooldownDelayTimer = 0f;
 
-        public float SuspicionMeter => _suspicionMeter;
+        public float SuspicionMeter
+        {
+            get => _suspicionMeter;
+            set => _suspicionMeter = Mathf.Clamp(value, 0f, 100f);
+        }
         public bool IsPlayerDetected => _isPlayerDetected;
 
         // Eventos
@@ -127,14 +131,14 @@ namespace FeedTheNight.NPCs
                     }
 
                     bool isKaguneActive = _playerKagune != null && _playerKagune.IsKaguneActive;
-
+                    /*
                     Debug.Log($"[VisionCone - {gameObject.name}] " +
                               $"Sospecha: {_suspicionMeter:F1}% | " +
                               $"Distancia: {distance:F2}m | " +
                               $"Obstáculo: {obstacleInfo} | " +
                               $"¿Kagune?: {(isKaguneActive ? "SÍ" : "NO")} | " +
                               $"¿Detectado?: {(_isPlayerDetected ? "SÍ" : "NO")} | " +
-                              $"Espera CD: {_cooldownDelayTimer:F1}s");
+                              $"Espera CD: {_cooldownDelayTimer:F1}s"); */
                 }
                 else
                 {
@@ -193,12 +197,22 @@ namespace FeedTheNight.NPCs
                 // Solo enfriamos sospecha si no estamos en el delay de 15s (o si no se había llegado al 100%)
                 if (!_isPlayerDetected || _cooldownDelayTimer >= detectionCooldownDelay)
                 {
-                    // Cuanto más alto sea el medidor de sospecha, más lento baja
-                    float suspicionFactor = Mathf.Clamp01(1f - (_suspicionMeter / 100f));
-                    // Mínimo 10% de velocidad para que no se detenga completamente cerca del 100%
-                    float cooldownFactor = Mathf.Max(0.1f, suspicionFactor);
-                    
-                    _suspicionMeter = Mathf.Max(0f, _suspicionMeter - cooldownSpeed * cooldownFactor * Time.deltaTime);
+                    // Solo baja si va agachado o si está camuflado cuando está en el rango de visión
+                    bool canCooldown = true;
+                    if (_playerInTrigger && _playerInputs != null)
+                    {
+                        canCooldown = _playerInputs.crouch || _playerInputs.camouflage;
+                    }
+
+                    if (canCooldown)
+                    {
+                        // Cuanto más alto sea el medidor de sospecha, más lento baja
+                        float suspicionFactor = Mathf.Clamp01(1f - (_suspicionMeter / 100f));
+                        // Mínimo 10% de velocidad para que no se detenga completamente cerca del 100%
+                        float cooldownFactor = Mathf.Max(0.1f, suspicionFactor);
+                        
+                        _suspicionMeter = Mathf.Max(0f, _suspicionMeter - cooldownSpeed * cooldownFactor * Time.deltaTime);
+                    }
                 }
             }
 
