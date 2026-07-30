@@ -10,6 +10,9 @@ namespace FeedTheNight.NPCs
         [Tooltip("Walking speed of the NPC.")]
         public float moveSpeed = 2f;
 
+        [Tooltip("Speed multiplier when fleeing from the player.")]
+        public float fleeSpeedMultiplier = 2f;
+
         [Header("Obstacle Detection")]
         [Tooltip("Distance at which the NPC detects obstacles and decides to turn.")]
         public float detectionDistance = 2f;
@@ -22,75 +25,142 @@ namespace FeedTheNight.NPCs
 
         private CharacterController _characterController;
         private NPCCivil _npcCivil;
-        private float _debugLogTimer = 0f;
+        private VisionCone _visionCone;
+
+        // Flee state
+        private bool _isFleeing = false;
+        private Transform _playerTransform;
 
         private void Awake()
         {
             _characterController = GetComponent<CharacterController>();
             _npcCivil = GetComponent<NPCCivil>();
-            Debug.Log($"[NPCController - {gameObject.name}] Initialized on GameObject '{gameObject.name}'");
+            _visionCone = GetComponent<VisionCone>();
+        }
+
+        private void OnEnable()
+        {
+            if (_visionCone != null)
+            {
+                _visionCone.OnPlayerDetected += OnPlayerDetected;
+                _visionCone.OnPlayerLost += OnPlayerLost;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_visionCone != null)
+            {
+                _visionCone.OnPlayerDetected -= OnPlayerDetected;
+                _visionCone.OnPlayerLost -= OnPlayerLost;
+            }
+        }
+
+        private void OnPlayerDetected()
+        {
+            _isFleeing = true;
+
+            // Find the player transform to know which direction to flee from
+            var playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                _playerTransform = playerObj.transform;
+            }
+
+            Debug.Log($"[NPCController - {gameObject.name}] ¡HUYENDO del jugador!");
+        }
+
+        private void OnPlayerLost()
+        {
+            _isFleeing = false;
+            _playerTransform = null;
+            Debug.Log($"[NPCController - {gameObject.name}] Jugador perdido. Volviendo a patrullar.");
         }
 
         private void Update()
         {
-            // Periodic debug log to diagnose movement issues (every 2 seconds)
-            _debugLogTimer += Time.deltaTime;
-            if (_debugLogTimer >= 2f)
-            {
-                _debugLogTimer = 0f;
-                if (_npcCivil != null && _npcCivil.IsDead)
-                {
-                    Debug.Log($"[NPCController - {gameObject.name}] NPC is DEAD. Movement skipped.");
-                }
-                else
-                {
-                    string ccInfo = (_characterController != null)
-                        ? $"CC Enabled: {_characterController.enabled}, Grounded: {_characterController.isGrounded}, Center: {_characterController.center}, Radius: {_characterController.radius}"
-                        : "NO CharacterController!";
-                    Debug.Log($"[NPCController - {gameObject.name}] Running. Speed: {moveSpeed}, Position: {transform.position}, {ccInfo}");
-                }
-            }
-
             // 1. If NPC is dead, stop all movement logic
             if (_npcCivil != null && _npcCivil.IsDead) return;
 
-            // 2. Obstacle detection in front of the NPC
+            // 2. Determine movement direction
+            if (_isFleeing && _playerTransform != null)
+            {
+                HandleFleeMovement();
+            }
+            else
+            {
+                HandleWanderMovement();
+            }
+        }
+
+        private void HandleFleeMovement()
+        {
+            // Calculate direction AWAY from the player
+            Vector3 fleeDirection = (transform.position - _playerTransform.position);
+            fleeDirection.y = 0f; // Keep horizontal
+            fleeDirection.Normalize();
+
+            // Rotate the NPC to face the flee direction
+            if (fleeDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(fleeDirection);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 8f);
+            }
+
+            // Check for obstacles while fleeing
             float radius = (_characterController != null) ? _characterController.radius : 0.5f;
-            // Start the raycast slightly in front of the NPC's collider to avoid hitting itself
+            Vector3 rayStart = transform.position + Vector3.up * raycastHeightOffset + transform.forward * (radius + 0.1f);
+
+            RaycastHit[] hits = Physics.RaycastAll(rayStart, transform.forward, detectionDistance, obstacleMask);
+            foreach (var hit in hits)
+            {
+                if (hit.collider.isTrigger || hit.transform.root == transform.root)
+                    continue;
+
+                // If obstacle ahead while fleeing, turn sideways to dodge it
+                float dodgeAngle = Random.value > 0.5f ? 90f : -90f;
+                transform.Rotate(0f, dodgeAngle, 0f);
+                break;
+            }
+
+            // Move forward (away from player) at flee speed
+            float currentSpeed = moveSpeed * fleeSpeedMultiplier;
+            if (_characterController != null && _characterController.enabled)
+            {
+                _characterController.SimpleMove(transform.forward * currentSpeed);
+            }
+            else
+            {
+                transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime, Space.Self);
+            }
+        }
+
+        private void HandleWanderMovement()
+        {
+            // Obstacle detection in front of the NPC
+            float radius = (_characterController != null) ? _characterController.radius : 0.5f;
             Vector3 rayStart = transform.position + Vector3.up * raycastHeightOffset + transform.forward * (radius + 0.1f);
             Vector3 rayDirection = transform.forward;
 
-            // We use Physics.RaycastAll to find obstacles and ignore the NPC's own colliders
             RaycastHit[] hits = Physics.RaycastAll(rayStart, rayDirection, detectionDistance, obstacleMask);
-            bool obstacleDetected = false;
 
             foreach (var hit in hits)
             {
-                // Ignore trigger colliders and ignore hits on ourselves (our own gameobject or children)
                 if (hit.collider.isTrigger || hit.transform.root == transform.root)
-                {
                     continue;
-                }
 
-                obstacleDetected = true;
-                
-                // Choose a random side angle to turn to (e.g. between 90 and 270 degrees to avoid backing straight up if possible)
                 float randomTurnAngle = Random.Range(90f, 270f);
                 transform.Rotate(0f, randomTurnAngle, 0f);
-                
-                Debug.Log($"[NPCController - {gameObject.name}] Obstacle '{hit.collider.gameObject.name}' detected at {hit.distance:F2}m. Rotating by {randomTurnAngle:F0} degrees.");
-                break; // One turn per frame is enough
+                break;
             }
 
-            // 3. Move forward
+            // Move forward at normal speed
             if (_characterController != null && _characterController.enabled)
             {
-                // SimpleMove applies gravity automatically
                 _characterController.SimpleMove(transform.forward * moveSpeed);
             }
             else
             {
-                // Fallback movement if CharacterController is disabled or not present
                 transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime, Space.Self);
             }
         }
@@ -98,9 +168,12 @@ namespace FeedTheNight.NPCs
         private void OnDrawGizmosSelected()
         {
             // Draw detection ray in inspector/scene view
-            Gizmos.color = Color.red;
-            float radius = (_characterController != null) ? _characterController.radius : 0.5f;
+            float radius = 0.5f;
+            if (_characterController != null) radius = _characterController.radius;
+
             Vector3 rayStart = transform.position + Vector3.up * raycastHeightOffset + transform.forward * (radius + 0.1f);
+
+            Gizmos.color = _isFleeing ? Color.yellow : Color.red;
             Gizmos.DrawRay(rayStart, transform.forward * detectionDistance);
         }
     }

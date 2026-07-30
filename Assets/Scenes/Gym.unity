@@ -33519,10 +33519,10 @@ MonoBehaviour:
   - {fileID: 882983302}
   - {fileID: 496325350}
   - {fileID: 2095467870}
-  maxNPCs: 15
+  maxNPCs: 10
   spawnOnStart: 1
   initialSpawnCount: 5
-  spawnInterval: 3
+  spawnInterval: 5
   projectToGround: 1
   groundLayers:
     serializedVersion: 2
@@ -69763,11 +69763,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -4670520448709566470, guid: b5dc924ab0184194c8cdb14e0ba22430, type: 3}
---- !u!1 &1125948947 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4080026774608935539, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-  m_PrefabInstance: {fileID: 7719222980023458455}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1125970035 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8246547302835722406, guid: 7961d5d64350968438e53e5349630794, type: 3}
@@ -109194,118 +109189,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 936663856}
   m_SourcePrefab: {fileID: 100100000, guid: 841fda1a8336ebd45a80491910c22305, type: 3}
---- !u!114 &1701412588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125948947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3456023a35bba04b9b28a4ab8c2e158, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.AudioDetection
-  audioDetectionSpeed: 30
-  audioCooldownSpeed: 20
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 1
---- !u!114 &1701412589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125948947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b85f8ab699b5abc458afd0fb4882baa7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.VisionCone
-  viewAngle: 90
-  viewDistance: 10
-  targetMask:
-    serializedVersion: 2
-    m_Bits: 1
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 1
-  checkInterval: 0.1
-  detectionSpeedMax: 20
-  detectionSpeedMin: 2
-  cooldownSpeed: 50
-  detectionCooldownDelay: 15
-  detectionDistanceCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: -0.9
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 0.1
-      inSlope: -0.9
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _suspicionMeter: 0
-  _isPlayerDetected: 0
-  _cooldownDelayTimer: 0
---- !u!114 &1701412590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125948947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d3d80b003fe4634e9ef38c56802a944, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FeedTheNight.NPCs.NPCController
-  moveSpeed: 2
-  detectionDistance: 2
-  obstacleMask:
-    serializedVersion: 2
-    m_Bits: 1
-  raycastHeightOffset: 1
---- !u!143 &1701412591
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125948947}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 2
-  m_Radius: 0.5
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1001 &1701442683
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -153266,10 +153149,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1793925451552271237, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      propertyPath: m_Center.y
-      value: -0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 3734884940107849929, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
       propertyPath: m_LocalPosition.x
       value: -32.230446
@@ -153314,35 +153193,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: npc_csl_00_character_01f_01
       objectReference: {fileID: 0}
-    - target: {fileID: 4678614596537374636, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      propertyPath: moveSpeed
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 4678614596537374636, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      propertyPath: detectionDistance
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4678614596537374636, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      propertyPath: obstacleMask.m_Bits
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 2033271045700345258, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4080026774608935539, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1701412591}
-    - targetCorrespondingSourceObject: {fileID: 4080026774608935539, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1701412590}
-    - targetCorrespondingSourceObject: {fileID: 4080026774608935539, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1701412589}
-    - targetCorrespondingSourceObject: {fileID: 4080026774608935539, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1701412588}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b6334c9fec06bc4469a51de205eb0010, type: 3}
 --- !u!1 &7732535365407298963
 GameObject:
