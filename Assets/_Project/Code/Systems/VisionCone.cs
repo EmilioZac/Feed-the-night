@@ -201,7 +201,9 @@ namespace FeedTheNight.NPCs
                     bool canCooldown = true;
                     if (_playerInTrigger && _playerInputs != null)
                     {
-                        canCooldown = _playerInputs.crouch || _playerInputs.camouflage;
+                        bool isMoving = _playerInputs.move.sqrMagnitude > 0.01f;
+                        bool isCrouchRunning = _playerInputs.crouch && _playerInputs.sprint && isMoving;
+                        canCooldown = (_playerInputs.crouch && !isCrouchRunning) || _playerInputs.camouflage;
                     }
 
                     if (canCooldown)

@@ -69,19 +69,28 @@ namespace FeedTheNight.NPCs
                 bool isCrouched = _playerInputs.crouch;
                 bool isCamouflaged = _playerInputs.camouflage;
                 bool isMoving = _playerInputs.move.sqrMagnitude > 0.01f;
+                bool isSprinting = _playerInputs.sprint;
 
-                if (!isMoving || isCrouched || isCamouflaged)
+                // El jugador hace un 50% de ruido si está agachado pero corriendo
+                bool isCrouchRunning = isCrouched && isSprinting && isMoving;
+
+                if (!isMoving || (isCrouched && !isCrouchRunning) || isCamouflaged)
                 {
-                    // Baja la sospecha si el jugador no se mueve (no hace ruido) o va agachado/camuflado
+                    // Baja la sospecha si el jugador no se mueve (no hace ruido) o va agachado (sin correr)/camuflado
                     float currentSuspicion = _visionCone.SuspicionMeter;
                     _visionCone.SuspicionMeter = currentSuspicion - audioCooldownSpeed * Time.deltaTime;
                     
-                    Debug.Log($"[AudioDetection - {gameObject.name}] Jugador sin hacer ruido o sigiloso en rango de audio ({distance:F2}m). Enfriando sospecha: {_visionCone.SuspicionMeter:F1}%");
+                    // Debug.Log($"[AudioDetection - {gameObject.name}] Jugador sin hacer ruido o sigiloso en rango de audio ({distance:F2}m). Enfriando sospecha: {_visionCone.SuspicionMeter:F1}%");
                 }
                 else
                 {
                     // Sube la sospecha si se mueve (hace ruido)
                     float detectionRate = audioDetectionSpeed;
+
+                    if (isCrouchRunning)
+                    {
+                        detectionRate *= 0.5f;
+                    }
 
                     // Si está en modo kagune, sube el doble
                     if (_playerKagune != null && _playerKagune.IsKaguneActive)
@@ -98,8 +107,8 @@ namespace FeedTheNight.NPCs
                     float currentSuspicion = _visionCone.SuspicionMeter;
                     _visionCone.SuspicionMeter = currentSuspicion + detectionRate * Time.deltaTime;
 
-                    Debug.Log($"[AudioDetection - {gameObject.name}] Jugador HACIENDO RUIDO en rango de audio ({distance:F2}m). " +
-                              $"Tasa: {detectionRate:F1}/s | Obstáculo: {(hasObstacle ? "SÍ" : "NO")} | Sospecha: {_visionCone.SuspicionMeter:F1}%");
+                    // Debug.Log($"[AudioDetection - {gameObject.name}] Jugador HACIENDO RUIDO en rango de audio ({distance:F2}m). " +
+                    //           $"Tasa: {detectionRate:F1}/s | Obstáculo: {(hasObstacle ? "SÍ" : "NO")} | Sospecha: {_visionCone.SuspicionMeter:F1}%");
                 }
             }
         }
