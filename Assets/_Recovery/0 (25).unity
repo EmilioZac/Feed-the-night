@@ -1946,7 +1946,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 64357408}
-  - component: {fileID: 64357409}
   m_Layer: 0
   m_Name: city_part_fences
   m_TagString: Untagged
@@ -2020,26 +2019,6 @@ Transform:
   - {fileID: 2030488797}
   m_Father: {fileID: 275961677}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &64357409
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64357407}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 1
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!1 &65942787 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6404866587023484956, guid: 7961d5d64350968438e53e5349630794, type: 3}
@@ -21373,31 +21352,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 36.40015, y: 59.70015, z: 36.40015}
   m_Center: {x: -0.0000076293945, y: 29.65, z: 0}
---- !u!1 &831263997 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1881731481852688950, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
-  m_PrefabInstance: {fileID: 1742194762}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &831263999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 831263997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 1
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!1001 &831619446
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49076,9 +49030,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1792683740506564318, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2128014696}
-    - targetCorrespondingSourceObject: {fileID: 1881731481852688950, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 831263999}
   m_SourcePrefab: {fileID: 100100000, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
 --- !u!1 &1742194763 stripped
 GameObject:
