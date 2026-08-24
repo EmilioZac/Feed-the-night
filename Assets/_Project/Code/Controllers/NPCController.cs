@@ -12,15 +12,18 @@ namespace FeedTheNight.NPCs
         Transform Objetivo;
         public float Distancia;
 
-        // [Header("Animaciones")]
-        // public Animation Anim;
-        // public string CaminandoAnim;
+        [Header("Animaciones")]
+        public Animator Anim;
+        public string CaminandoAnim;
 
         void Start()
         {
             Objetivo = Objetivos[Random.Range(0, Objetivos.Length)];
 
-            // Anim.Play(CaminandoAnim);
+            if (Anim != null && !string.IsNullOrEmpty(CaminandoAnim))
+            {
+                Anim.Play(CaminandoAnim);
+            }
         }
 
         // Update is called once per frame
