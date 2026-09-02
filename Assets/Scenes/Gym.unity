@@ -21373,31 +21373,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 36.40015, y: 59.70015, z: 36.40015}
   m_Center: {x: -0.0000076293945, y: 29.65, z: 0}
---- !u!1 &831263997 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1881731481852688950, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
-  m_PrefabInstance: {fileID: 1742194762}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &831263999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 831263997}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 1
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!1001 &831619446
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41399,8 +41374,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1712087423}
     - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: GritandoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: ae7ad636a5a775c40b464296d5a4a077, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
       propertyPath: CaminandoAnim
       value: Walking
+      objectReference: {fileID: 0}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: CaminandoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: ef33e2d54a4589b4ab101f1ece79e582, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: CorriendoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: 0205d6542b03fc945864d241e677bb0d, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: VelocidadCorrer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
       propertyPath: 'Objetivos.Array.data[0]'
@@ -41426,7 +41417,8 @@ PrefabInstance:
       propertyPath: 'Objetivos.Array.data[5]'
       value: 
       objectReference: {fileID: 2130009961}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7756858528987789248, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -49032,7 +49024,8 @@ PrefabInstance:
       value: -0.22
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1881731481852688950, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5658063466159132811, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
@@ -49179,9 +49172,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1792683740506564318, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2128014696}
-    - targetCorrespondingSourceObject: {fileID: 1881731481852688950, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 831263999}
   m_SourcePrefab: {fileID: 100100000, guid: 163fb83d417b461489ee310e23709fe8, type: 3}
 --- !u!1 &1742194763 stripped
 GameObject:
@@ -58682,8 +58672,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1464838610}
     - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: GritandoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: ae7ad636a5a775c40b464296d5a4a077, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
       propertyPath: CaminandoAnim
       value: Walking
+      objectReference: {fileID: 0}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: CaminandoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: ef33e2d54a4589b4ab101f1ece79e582, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: CorriendoClip
+      value: 
+      objectReference: {fileID: -203655887218126122, guid: 0205d6542b03fc945864d241e677bb0d, type: 3}
+    - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
+      propertyPath: VelocidadCorrer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8808043557617626838, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
       propertyPath: 'Objetivos.Array.data[0]'
@@ -58709,7 +58715,8 @@ PrefabInstance:
       propertyPath: 'Objetivos.Array.data[5]'
       value: 
       objectReference: {fileID: 251055100}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7756858528987789248, guid: acc1374915ef2fe4fa528d1988a7a157, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
