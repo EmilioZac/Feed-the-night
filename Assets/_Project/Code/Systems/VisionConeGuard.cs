@@ -4,43 +4,8 @@ using System;
 
 namespace FeedTheNight.NPCs
 {
-    // ══════════════════════════════════════════════
-    //  ENUMS DE MÁQUINA DE ESTADOS
-    // ══════════════════════════════════════════════
-
-    /// <summary>
-    /// Define los posibles estados del NPC.
-    /// Una única propiedad CurrentState gobierna todo el comportamiento.
-    /// </summary>
-    public enum NPCState
-    {
-        /// <summary>El NPC patrulla normalmente sin haber detectado nada.</summary>
-        Idle,
-        /// <summary>El NPC ha percibido algo (sospecha > 0%) pero aún no confirma al jugador.</summary>
-        Suspicious,
-        /// <summary>La sospecha llegó al 100%. El NPC reacciona (grito de alerta).</summary>
-        Detected,
-        /// <summary>El NPC civil huye despavorido del jugador.</summary>
-        Fleeing,
-        /// <summary>El NPC guardia persigue activamente al jugador.</summary>
-        Chasing,
-        /// <summary>El NPC perdió de vista al jugador y vuelve progresivamente a Idle.</summary>
-        Returning
-    }
-
-    /// <summary>
-    /// Fuente de detección activa en el frame actual.
-    /// </summary>
-    public enum DetectionSource
-    {
-        None,
-        Vision,
-        Audio,
-        VisionAndAudio
-    }
-
-    [AddComponentMenu("FeedTheNight/NPCs/Vision Cone")]
-    public class VisionCone : MonoBehaviour
+    [AddComponentMenu("FeedTheNight/NPCs/Vision Cone Guard")]
+    public class VisionConeGuard : MonoBehaviour
     {
         // ──────────────────────────────────────────────
         //  CONFIGURACIÓN DE VISIÓN
@@ -126,8 +91,8 @@ namespace FeedTheNight.NPCs
         /// <summary>Porcentaje de sospecha actual (0-100).</summary>
         public float SuspicionMeter => _suspicionMeter;
 
-        /// <summary>True si el estado actual es Detected, Fleeing o Chasing.</summary>
-        public bool IsPlayerDetected => _currentState == NPCState.Detected || _currentState == NPCState.Fleeing || _currentState == NPCState.Chasing;
+        /// <summary>True si el estado actual es Detected o Chasing.</summary>
+        public bool IsPlayerDetected => _currentState == NPCState.Detected || _currentState == NPCState.Chasing;
 
         /// <summary>True si la fuente de detección incluye visión.</summary>
         public bool CanSeePlayer => _currentDetectionSource == DetectionSource.Vision || _currentDetectionSource == DetectionSource.VisionAndAudio;
@@ -307,12 +272,11 @@ namespace FeedTheNight.NPCs
                     break;
 
                 case NPCState.Detected:
-                    // El NPCController se encarga de la transición a Fleeing/Chasing tras el grito
+                    // El NPCController se encarga de la transición a Chasing tras el grito
                     if (_suspicionMeter <= 0f)
                         TransitionTo(NPCState.Idle);
                     break;
 
-                case NPCState.Fleeing:
                 case NPCState.Chasing:
                     if (_suspicionMeter <= 0f)
                         TransitionTo(NPCState.Returning);
@@ -348,7 +312,7 @@ namespace FeedTheNight.NPCs
                 Debug.Log($"<color=red><b>[VisionCone - {gameObject.name}]</b></color> ¡JUGADOR DETECTADO AL 100%! Disparando evento OnPlayerDetected.");
                 OnPlayerDetected?.Invoke();
             }
-            else if (newState == NPCState.Idle && (previousState == NPCState.Returning || previousState == NPCState.Fleeing || previousState == NPCState.Chasing || previousState == NPCState.Detected || previousState == NPCState.Suspicious))
+            else if (newState == NPCState.Idle && (previousState == NPCState.Returning || previousState == NPCState.Chasing || previousState == NPCState.Detected || previousState == NPCState.Suspicious))
             {
                 _cooldownDelayTimer = 0f;
                 Debug.Log($"<color=green><b>[VisionCone - {gameObject.name}]</b></color> Sospecha al 0%. Jugador perdido. Disparando evento OnPlayerLost.");
@@ -373,11 +337,7 @@ namespace FeedTheNight.NPCs
 
         private bool CheckVision()
         {
-            if (_playerTransform == null)
-            {
-                Debug.LogWarning($"<color=red><b>[Vision - {gameObject.name}]</b></color> ¡Fallo! _playerTransform es NULO.");
-                return false;
-            }
+            if (_playerTransform == null) return false;
 
             float actualEyeHeight = eyeHeight > 0.1f ? eyeHeight : 1.6f;
             Vector3 eyeOrigin = transform.position + Vector3.up * actualEyeHeight;
@@ -448,7 +408,7 @@ namespace FeedTheNight.NPCs
                     {
                         if (shouldLogVision)
                         {
-                            Debug.Log($"<color=lime><b>[Vision - {gameObject.name}]</b></color> <color=white>¡JUGADOR VISTO en {pointName}!</color> | " +
+                            Debug.Log($"<color=lime><b>[VisionGuard - {gameObject.name}]</b></color> <color=white>¡JUGADOR VISTO en {pointName}!</color> | " +
                                       $"Collider: <b>{hit.collider.gameObject.name}</b> (Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}) | " +
                                       $"Ángulo: <b>{angle:F1}°</b> (Max: {maxAngle:F1}°) | Distancia: <b>{distance:F1}m</b>");
                         }
@@ -465,7 +425,7 @@ namespace FeedTheNight.NPCs
 
             if (shouldLogVision && !string.IsNullOrEmpty(diagnosticInfo))
             {
-                Debug.Log($"<color=yellow><b>[Vision Diagnostic - {gameObject.name}]</b></color> No visto -> {diagnosticInfo}");
+                Debug.Log($"<color=yellow><b>[VisionGuard Diagnostic - {gameObject.name}]</b></color> No visto -> {diagnosticInfo}");
             }
 
             return false;
@@ -570,7 +530,7 @@ namespace FeedTheNight.NPCs
             else
             {
                 // ─── BAJAR SOSPECHA ───
-                if (_currentState == NPCState.Detected || _currentState == NPCState.Fleeing || _currentState == NPCState.Chasing)
+                if (_currentState == NPCState.Detected || _currentState == NPCState.Chasing)
                 {
                     if (_cooldownDelayTimer < detectionCooldownDelay)
                     {
@@ -639,34 +599,20 @@ namespace FeedTheNight.NPCs
             string obstaculoInfo = "—";
             if (_playerTransform != null && isPlayerInRange)
             {
-                Vector3 eyePos = transform.position + Vector3.up * eyeHeight;
                 Vector3 targetPos = _playerTransform.position + Vector3.up * 1.0f;
-                Vector3 dir = targetPos - eyePos;
-
-                LayerMask mask = obstacleMask | targetMask;
-                if (mask.value == 0) mask = ~0;
-
-                RaycastHit[] hits = Physics.RaycastAll(eyePos, dir.normalized, dir.magnitude, mask, QueryTriggerInteraction.Ignore);
-                System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-                bool foundObstacle = false;
-                foreach (var hit in hits)
+                Vector3 dir = targetPos - transform.position;
+                if (Physics.Raycast(transform.position, dir.normalized, out RaycastHit hit, dir.magnitude, obstacleMask, QueryTriggerInteraction.Ignore))
                 {
-                    if (hit.transform.root == transform.root) continue; // Ignorar propio NPC
-
-                    if (hit.transform.root == _playerTransform.root || hit.collider.CompareTag("Player") || hit.collider.GetComponentInParent<StarterAssetsInputs>() != null)
+                    if (hit.transform.root != _playerTransform.root)
                     {
-                        break; // Llegó al jugador sin obstáculos
+                        obstaculoInfo = $"<color=red>SÍ ({hit.collider.gameObject.name})</color>";
                     }
                     else
                     {
-                        obstaculoInfo = $"<color=red>SÍ ({hit.collider.gameObject.name})</color>";
-                        foundObstacle = true;
-                        break;
+                        obstaculoInfo = "<color=lime>NO (Despejado)</color>";
                     }
                 }
-
-                if (!foundObstacle)
+                else
                 {
                     obstaculoInfo = "<color=lime>NO (Despejado)</color>";
                 }
@@ -684,7 +630,6 @@ namespace FeedTheNight.NPCs
                 case NPCState.Idle: estadoColor = "<color=white>Idle</color>"; break;
                 case NPCState.Suspicious: estadoColor = "<color=yellow>Suspicious</color>"; break;
                 case NPCState.Detected: estadoColor = "<color=red>Detected</color>"; break;
-                case NPCState.Fleeing: estadoColor = "<color=#FF8800>Fleeing (Huyendo)</color>"; break;
                 case NPCState.Chasing: estadoColor = "<color=#FF4444>Chasing</color>"; break;
                 case NPCState.Returning: estadoColor = "<color=green>Returning</color>"; break;
                 default: estadoColor = _currentState.ToString(); break;
@@ -749,7 +694,6 @@ namespace FeedTheNight.NPCs
             switch (_currentState)
             {
                 case NPCState.Detected:
-                case NPCState.Fleeing:
                 case NPCState.Chasing:
                     Gizmos.color = Color.red;
                     break;
